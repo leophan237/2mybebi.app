@@ -2614,13 +2614,30 @@ globalThis.SlideLingo = (() => {
             actions.push({ mode: "INLINE_APPEND", paren: true, sourceText: nonEmpty.join(" "), ratio: RF.transRatio, pNode: pNodes[lastIdx], pIndex: lastIdx });
           }
         } else {
-          // Loại 3: Ô tiêu đề bảng chia động từ ngữ pháp "Positive: S + be + V-ing" / "Negative: S + be not + V-ing"
+          // Loại 3: Ô tiêu đề bảng chia động từ ngữ pháp "Positive: S + be + V-ing" hoặc tiêu đề nhóm câu trong lưới Key expressions
+          const runs = descendants(body, A, "rPr");
+          const isBoldCell = runs.some(r => r.getAttribute("b") === "1");
           for (let i = 0; i < pNodes.length; i++) {
             const t = pTexts[i];
             if (!t) continue;
             const m = t.match(grammarBannerCellRe);
             if (m && /\+/.test(m[2])) {
               actions.push({ mode: "INLINE_LABEL_PAREN", sourceText: m[1].trim(), ratio: RF.transRatio, pNode: pNodes[i], pIndex: i });
+              continue;
+            }
+            const wc = t.split(/\s+/).filter(Boolean).length;
+            const isCategoryHeaderCell =
+              (baseContext.keyExpressions || (trs.length >= 2 && isBoldCell && wc >= 2)) &&
+              nonEmpty.length === 1 &&
+              wc >= 1 && wc <= 6 &&
+              t.length <= 52 &&
+              /^[A-Z]/.test(t) &&
+              !/[.?!:]$/.test(t) &&
+              !/_{2,}/.test(t) &&
+              !/^(?:[a-d]|[1-9]\d?)[.)]\s/i.test(t) &&
+              eligible(t);
+            if (isCategoryHeaderCell) {
+              actions.push({ mode: "INLINE_APPEND", paren: true, sourceText: t, ratio: RF.transRatio, pNode: pNodes[i], pIndex: i, needsAiTriage: true });
             }
           }
         }
@@ -2660,6 +2677,7 @@ globalThis.SlideLingo = (() => {
       grammar: all.some(t => /^(?:using .+ (?:tense|for|to)|form of|use of|grammar\b|intonation\s*&\s*stress)/i.test(t)),
       explainVocab: all.some(t => /^vocabulary\s*:?$/i.test(t)) &&
         !all.some(t => /^\s*(?:read|choose|match|test|fill|check|look|say)\b/i.test(t)),
+      keyExpressions: all.some(t => /^(?:key\s+expressions?|useful\s+(?:expressions?|phrases?|language))\s*[:：]/i.test(t)),
     };
 
     let slideHasPrimaryInstruction = false;
@@ -2754,11 +2772,22 @@ globalThis.SlideLingo = (() => {
               const isColonLead = /^[A-Z][A-Za-z0-9\s'’/&-]{2,55}:\s*$/.test(t);
               const isShortUiOrTitle = wc >= 1 && wc <= 5 && /^[A-Z]/.test(t) && (filledShape || inTopHeaderZone);
               const isInInstructionBox = boxHasPrimaryInstruction && (wc >= 3 || /[:.?!]$/.test(t));
-              if (isColonLead || isInInstructionBox || isShortUiOrTitle) {
-                const isClearDirective = isColonLead || directions.test(t) || explicit.test(t) || isGlossaryHeading(t);
+              const isKeyExprPhrase = Boolean(
+                shapeContext.keyExpressions &&
+                !inTopHeaderZone &&
+                eligible(t) &&
+                !isGlossaryHeading(t) &&
+                !/^(?:key\s+expressions?|useful\s+(?:expressions?|phrases?|language))\b/i.test(t) &&
+                (/[✓✔•]/.test(t) || wc >= 2) &&
+                t.length <= 160
+              );
+              if (isColonLead || isInInstructionBox || isShortUiOrTitle || isKeyExprPhrase) {
+                const isClearDirective = isKeyExprPhrase || isColonLead || directions.test(t) || explicit.test(t) || isGlossaryHeading(t);
                 act = {
-                  mode: (isColonLead || isShortUiOrTitle || wc <= 6) ? "NEWLINE_AFTER" : "INLINE_APPEND",
-                  sourceText: t,
+                  mode: isKeyExprPhrase
+                    ? "INLINE_APPEND"
+                    : (isColonLead || isShortUiOrTitle || wc <= 6) ? "NEWLINE_AFTER" : "INLINE_APPEND",
+                  sourceText: isKeyExprPhrase ? t.replace(/^[\s✓✔•\-–—]+/, "").trim() || t : t,
                   hasPattern: hasProtectedPattern(t),
                   needsAiTriage: true,
                   aiOnly: !isClearDirective,
@@ -2978,8 +3007,74 @@ globalThis.SlideLingo = (() => {
   }
 
   const RPR_ORDER_AFTER_FONTS = new Set(["sym", "hlinkClick", "hlinkMouseOver", "rtl", "extLst"]);
+  const RPR_ORDER_AFTER_FILL = new Set(["effectLst", "effectDag", "highlight", "uLnTx", "uLn", "uFillTx", "uFill", "latin", "ea", "cs", "sym", "hlinkClick", "hlinkMouseOver", "rtl", "extLst"]);
+  const RPR_FILL_TAGS = new Set(["noFill", "solidFill", "gradFill", "blipFill", "pattFill", "grpFill"]);
   const PPR_ORDER_AFTER_BULLET = new Set(["tabLst", "defRPr", "extLst"]);
   const BODYPR_ORDER_AFTER_AUTOFIT = new Set(["scene3d", "sp3d", "flatTx", "extLst"]);
+
+  function resolveSchemeFallbackHex(schemeKey, ctx) {
+    if (!schemeKey) return null;
+    let k = ctx?.clrMap?.[schemeKey] || schemeKey;
+    if (ctx?.scheme?.[k]) return String(ctx.scheme[k]).toUpperCase();
+    const defaults = {
+      lt1: "FFFFFF", bg1: "FFFFFF", lt2: "F3F4F6", bg2: "F3F4F6",
+      dk1: "000000", tx1: "000000", dk2: "1F2937", tx2: "1F2937",
+      accent1: "1E40AF", accent2: "D97706", accent3: "64748B",
+    };
+    return defaults[k] || defaults[schemeKey] || null;
+  }
+
+  function resolveFillHex(fillEl, ctx) {
+    if (!fillEl) return null;
+    const srgb = child(fillEl, A, "srgbClr");
+    if (srgb?.getAttribute("val")) return srgb.getAttribute("val").toUpperCase();
+    const scheme = child(fillEl, A, "schemeClr");
+    if (scheme?.getAttribute("val")) return resolveSchemeFallbackHex(scheme.getAttribute("val"), ctx);
+    const sys = child(fillEl, A, "sysClr");
+    if (sys) return (sys.getAttribute("lastClr") || "000000").toUpperCase();
+    return null;
+  }
+
+  function resolveSourceTextHex(sourceRPr, pNode, body, ctx) {
+    const rFill = resolveFillHex(child(sourceRPr, A, "solidFill"), ctx);
+    if (rFill) return rFill;
+    const defFill = resolveFillHex(child(child(child(pNode, A, "pPr"), A, "defRPr"), A, "solidFill"), ctx);
+    if (defFill) return defFill;
+    const hostNode = body?.parentNode;
+    if (hostNode && hostNode.namespaceURI === P) {
+      const styleFontRef = child(child(hostNode, P, "style"), A, "fontRef");
+      if (styleFontRef) {
+        const refScheme = child(styleFontRef, A, "schemeClr")?.getAttribute("val");
+        const refHex = child(styleFontRef, A, "srgbClr")?.getAttribute("val")?.toUpperCase() || resolveSchemeFallbackHex(refScheme, ctx);
+        if (refHex) return refHex;
+      }
+      const spBgHex = resolveFillHex(child(child(hostNode, P, "spPr"), A, "solidFill"), ctx);
+      if (spBgHex && /^[0-9A-F]{6}$/.test(spBgHex) && relLum(spBgHex) < 0.42) return "FFFFFF";
+    } else if (hostNode && hostNode.namespaceURI === A && hostNode.localName === "tc") {
+      const tcBgHex = resolveFillHex(child(child(hostNode, A, "tcPr"), A, "solidFill"), ctx);
+      if (tcBgHex && /^[0-9A-F]{6}$/.test(tcBgHex) && relLum(tcBgHex) < 0.42) return "FFFFFF";
+    }
+    return resolveSchemeFallbackHex("tx1", ctx) || "000000";
+  }
+
+  /**
+   * Chọn màu chữ tương phản & thẩm mỹ cho bản dịch để phân biệt trực quan với câu tiếng Anh gốc:
+   * - Nền tối / chữ gốc sáng màu -> Vàng kem ấm (#FEF08A)
+   * - Chữ gốc xanh dương / xanh ngọc -> Đỏ rượu Rose-Berry (#B4235A)
+   * - Mặc định chữ gốc đen / xám / đỏ -> Xanh Cobalt đậm (#1D4ED8)
+   */
+  function pickBilingualAccentHex(sourceRPr, pNode, body, ctx) {
+    const srcHex = resolveSourceTextHex(sourceRPr, pNode, body, ctx);
+    if (!/^[0-9A-F]{6}$/.test(srcHex)) return "1D4ED8";
+    if (relLum(srcHex) >= 0.48) return "FEF08A";
+    const r = parseInt(srcHex.slice(0, 2), 16);
+    const g = parseInt(srcHex.slice(2, 4), 16);
+    const b = parseInt(srcHex.slice(4, 6), 16);
+    if ((b >= r + 24 && (b >= 90 || g >= 90)) || (g >= r + 24 && b >= r + 15)) {
+      return "B4235A";
+    }
+    return "1D4ED8";
+  }
 
   function insertSchemaOrdered(parent, newNode, afterSet) {
     const ref = Array.from(parent.children).find(ch => ch.namespaceURI === A && afterSet.has(ch.localName));
@@ -3075,10 +3170,10 @@ globalThis.SlideLingo = (() => {
   }
 
   /**
-   * Sao chép <a:rPr> gốc và bổ sung cấu hình ngôn ngữ + font đích theo đúng thứ tự XSD của ECMA-376
-   * mà không làm mất màu sắc hay font tiếng Anh (<a:latin>).
+   * Sao chép <a:rPr> gốc và bổ sung cấu hình ngôn ngữ + font đích + màu sắc phân biệt bản dịch
+   * theo đúng thứ tự XSD của ECMA-376 mà không làm mất font tiếng Anh (<a:latin>).
    */
-  function buildInheritedRunProps(doc, sourceRPr, lang, font, targetCode, scale = 1.0) {
+  function buildInheritedRunProps(doc, sourceRPr, lang, font, targetCode, scale = 1.0, accentHex = null) {
     const rPr = sourceRPr ? sourceRPr.cloneNode(true) : doc.createElementNS(A, "a:rPr");
     rPr.setAttribute("lang", lang);
     rPr.setAttribute("dirty", "0");
@@ -3086,6 +3181,15 @@ globalThis.SlideLingo = (() => {
     if (scale !== 1.0 && rPr.hasAttribute("sz")) {
       const sz = Number(rPr.getAttribute("sz"));
       if (sz > 0) rPr.setAttribute("sz", String(Math.round(sz * scale)));
+    }
+
+    if (accentHex && /^[0-9A-F]{6}$/i.test(accentHex)) {
+      for (const ch of Array.from(rPr.children)) {
+        if (ch.namespaceURI === A && RPR_FILL_TAGS.has(ch.localName)) rPr.removeChild(ch);
+      }
+      const solidFill = doc.createElementNS(A, "a:solidFill");
+      add(doc, solidFill, A, "srgbClr", { val: accentHex.toUpperCase() });
+      insertSchemaOrdered(rPr, solidFill, RPR_ORDER_AFTER_FILL);
     }
 
     const usesEastAsianFont = ["ja", "ko", "zh", "zh-Hant"].includes(targetCode);
@@ -3107,9 +3211,9 @@ globalThis.SlideLingo = (() => {
     return rPr;
   }
 
-  function createTranslatedRun(doc, sourceRPr, text, lang, font, targetCode, scale = 1.0) {
+  function createTranslatedRun(doc, sourceRPr, text, lang, font, targetCode, scale = 1.0, accentHex = null) {
     const r = doc.createElementNS(A, "a:r");
-    r.appendChild(buildInheritedRunProps(doc, sourceRPr, lang, font, targetCode, scale));
+    r.appendChild(buildInheritedRunProps(doc, sourceRPr, lang, font, targetCode, scale, accentHex));
     const t = add(doc, r, A, "t", {}, text);
     if (/^\s|\s$/.test(text)) t.setAttribute("xml:space", "preserve");
     return r;
@@ -3119,7 +3223,7 @@ globalThis.SlideLingo = (() => {
    * Thực thi chèn bản dịch trực tiếp vào <p:txBody> theo đúng chế độ sư phạm của từng đoạn <a:p>.
    * Trả về bản ghi (record) để bộ giải bố cục có thể đổi cỡ chữ, đổi nối dòng ↔ xuống dòng hoặc hoàn tác.
    */
-  function injectActionIntoParagraph(doc, body, action, translatedText, lang, font, targetCode) {
+  function injectActionIntoParagraph(doc, body, action, translatedText, lang, font, targetCode, ctx = null) {
     const { pNode, mode } = action;
     if (!pNode || !pNode.parentNode) return null;
     const cleanTrans = action.paren ? translatedText.replace(/\s*[:：]\s*$/, "").trim() : translatedText;
@@ -3130,11 +3234,12 @@ globalThis.SlideLingo = (() => {
 
     if (mode === "INLINE_APPEND") {
       const refRPr = pickReferenceRunProps(pNode, false);
+      const accentHex = pickBilingualAccentHex(refRPr, pNode, body, ctx);
       const existingT = descendants(pNode, A, "t");
       const lastT = existingT[existingT.length - 1];
       const needsSpace = !lastT || !/\s$/.test(lastT.textContent || "");
       const runText = (needsSpace ? " " : "") + displayTrans;
-      const newRun = createTranslatedRun(doc, refRPr, runText, lang, font, targetCode, 1);
+      const newRun = createTranslatedRun(doc, refRPr, runText, lang, font, targetCode, 1, accentHex);
       const endPara = child(pNode, A, "endParaRPr");
       pNode.insertBefore(newRun, endPara || null);
       record.run = newRun;
@@ -3165,7 +3270,8 @@ globalThis.SlideLingo = (() => {
       }
       if (!targetRun) {
         const refRPr = child(runs[0], A, "rPr") || pickReferenceRunProps(pNode, false);
-        const newRun = createTranslatedRun(doc, refRPr, parenLabel, lang, font, targetCode, 1);
+        const accentHex = pickBilingualAccentHex(refRPr, pNode, body, ctx);
+        const newRun = createTranslatedRun(doc, refRPr, parenLabel, lang, font, targetCode, 1, accentHex);
         pNode.insertBefore(newRun, endPara || null);
         record.run = newRun;
         return record;
@@ -3173,7 +3279,8 @@ globalThis.SlideLingo = (() => {
       const runIdx = runs.indexOf(targetRun);
       const prevRun = runIdx > 0 ? runs[runIdx - 1] : targetRun;
       const labelRPr = child(colonIdx === 0 ? prevRun : targetRun, A, "rPr") || pickReferenceRunProps(pNode, false);
-      const newRun = createTranslatedRun(doc, labelRPr, parenLabel, lang, font, targetCode, 1);
+      const accentHex = pickBilingualAccentHex(labelRPr, pNode, body, ctx);
+      const newRun = createTranslatedRun(doc, labelRPr, parenLabel, lang, font, targetCode, 1, accentHex);
       if (colonIdx === 0) {
         pNode.insertBefore(newRun, targetRun);
       } else {
@@ -3199,13 +3306,14 @@ globalThis.SlideLingo = (() => {
 
     if (mode === "HYBRID_INPLACE") {
       const refRPr = pickReferenceRunProps(pNode, false);
+      const accentHex = pickBilingualAccentHex(refRPr, pNode, body, ctx);
       const pPr = child(pNode, A, "pPr");
       const endPara = child(pNode, A, "endParaRPr");
       record.removed = [];
       for (const ch of Array.from(pNode.children)) {
         if (ch !== pPr && ch !== endPara) { pNode.removeChild(ch); record.removed.push(ch); }
       }
-      const newRun = createTranslatedRun(doc, refRPr, translatedText, lang, font, targetCode, 1);
+      const newRun = createTranslatedRun(doc, refRPr, translatedText, lang, font, targetCode, 1, accentHex);
       pNode.insertBefore(newRun, endPara || null);
       record.run = newRun;
       return record;
@@ -3214,6 +3322,7 @@ globalThis.SlideLingo = (() => {
     if (mode === "EXAMPLE_NEWLINE" || mode === "HYBRID_NEWLINE" || mode === "NEWLINE_AFTER") {
       const skipPrefix = mode === "EXAMPLE_NEWLINE";
       const refRPr = pickReferenceRunProps(pNode, skipPrefix);
+      const accentHex = pickBilingualAccentHex(refRPr, pNode, body, ctx);
       const newP = doc.createElementNS(A, "a:p");
       const origPPr = child(pNode, A, "pPr");
       if (origPPr) {
@@ -3237,7 +3346,7 @@ globalThis.SlideLingo = (() => {
       }
       // Căn thẳng với chữ gốc khi đoạn gốc dùng khoảng trắng đầu dòng để thụt lề
       const leadWS = (descendants(pNode, A, "t").map(t => t.textContent).join("").match(/^[ \u00a0\t]+/) || [""])[0];
-      const newRun = createTranslatedRun(doc, refRPr, leadWS + translatedText, lang, font, targetCode, 1);
+      const newRun = createTranslatedRun(doc, refRPr, leadWS + translatedText, lang, font, targetCode, 1, accentHex);
       newP.appendChild(newRun);
       const origEnd = child(pNode, A, "endParaRPr");
       if (origEnd) {
@@ -3261,9 +3370,9 @@ globalThis.SlideLingo = (() => {
   // Layout Model → Measure (Canvas) → Solver (thang chiến lược) → QA
   // ======================================================================
   const RF = {
-    transRatio: 0.85,      // cỡ bản dịch mặc định so với chữ gốc
-    transFloor: 0.75,      // sàn cỡ bản dịch
-    srcFloor: 0.87,        // sàn co chữ tiếng Anh gốc
+    transRatio: 0.82,      // cỡ bản dịch mặc định so với chữ gốc (gọn gàng, phân tầng rõ)
+    transFloor: 0.58,      // sàn cỡ bản dịch khi nén cục bộ/toàn slide
+    srcFloor: 0.72,        // sàn co chữ tiếng Anh gốc khi bố cục dày
     titleRatioXL: 0.6,     // tiêu đề ≥ 36pt
     titleRatioL: 0.7,      // tiêu đề 24–36pt
     gutter: 6,             // khoảng cách tối thiểu tới vật cản bên cạnh
@@ -3673,6 +3782,7 @@ globalThis.SlideLingo = (() => {
   function buildLayoutModel(ctx, doc, tree, W, H) {
     const items = [];
     const textByNode = new Map();
+    const tableCells = [];
     let z = 0;
     const timingTargets = new Set(descendants(child(doc.documentElement, P, "timing"), P, "spTgt").map(t => t.getAttribute("spid")));
 
@@ -3847,6 +3957,7 @@ globalThis.SlideLingo = (() => {
               cellItem.frame = makeTextFrame(cellItem);
               cm.item = cellItem;
               textByNode.set(cm.tc, cellItem);
+              tableCells.push(cellItem);
             }
             yAcc += row.h;
           }
@@ -3912,6 +4023,28 @@ globalThis.SlideLingo = (() => {
 
     const live = items.filter(it => !it.background);
 
+    // Liên kết khung chữ đặt chồng lên từng ô của bảng (<a:tbl> cell) để giữ ranh giới ô & tránh đè tiêu đề ô
+    if (tableCells.length) {
+      for (const it of live) {
+        if (it.kind !== "text" || it.inTable || it.inGroup || it.chrome) continue;
+        const box = it.filled ? it.rect : unionRect(it.orig.lines) || it.rect;
+        const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+        let bestCell = null, bestArea = 0;
+        for (const c of tableCells) {
+          if (c.tableItem?.chrome) continue;
+          if (it.rect.w > c.rect.w * 1.12) continue;
+          if (cx < c.rect.x - 4 || cx > c.rect.x + c.rect.w + 4 || cy < c.rect.y - 4 || cy > c.rect.y + c.rect.h + 4) continue;
+          const ia = interArea(box, c.rect);
+          if (ia < areaOf(box) * 0.45 && ia < c.rect.w * 12) continue;
+          const hasCellHeaderAbove = c.orig.lines.some(l => l.y < it.orig.top + 4);
+          const isContentCellBox = box.w >= c.rect.w * 0.4 && (it.orig.lay.paras.length >= 2 || hasCellHeaderAbove || extract(it.node).join(" ").length > 24);
+          if (!isContentCellBox) continue;
+          if (ia > bestArea) { bestArea = ia; bestCell = c; }
+        }
+        if (bestCell) it.hostCell = bestCell;
+      }
+    }
+
     // Khối chứa (container): hình nền phía sau bao trọn khung chữ (kể cả thẻ group hoặc box chứa tiêu đề thẻ)
     for (const it of live) {
       if (it.kind !== "text") continue;
@@ -3968,7 +4101,7 @@ globalThis.SlideLingo = (() => {
 
     // Phần tử đính kèm (overlay): đáp án trên chỗ trống, icon cạnh bullet, mũi tên ngữ điệu, ô đáp án trên bảng
     for (const x of live) {
-      if (x.locked || x.contents?.length || x.attachedTo) continue;
+      if (x.locked || x.contents?.length || x.attachedTo || x.hostCell) continue;
       if (x.kind === "text" && x.filled && x.rect.w > 150) continue;
       if (x.kind === "text" && extract(x.node).join(" ").length > 24) continue;
       let host = null;
@@ -4306,6 +4439,11 @@ globalThis.SlideLingo = (() => {
         if (maxR <= c.x + c.w) right = Math.min(right, c.x + c.w - 4 + it.insets.r);
         if (minL >= c.x) left = Math.max(left, c.x + 4 - it.insets.l);
       }
+      if (it.hostCell) {
+        const hc = it.hostCell.rect;
+        right = Math.min(right, hc.x + hc.w - 3 + it.insets.r);
+        left = Math.max(left, hc.x + 2 - it.insets.l);
+      }
       it.box = { x: left, w: Math.max(12, right - left) };
     }
     // Nới rộng vừa phải vào vùng trống (không vượt vật cản, khối nền, vùng nền ảnh tương phản kém)
@@ -4328,6 +4466,11 @@ globalThis.SlideLingo = (() => {
         const c = it.container.origRect;
         maxRight = Math.min(maxRight, c.x + c.w - 4 + it.insets.r);
         minLeft = Math.max(minLeft, c.x + 4 - it.insets.l);
+      }
+      if (it.hostCell) {
+        const hc = it.hostCell.rect;
+        maxRight = Math.min(maxRight, hc.x + hc.w - 3 + it.insets.r);
+        minLeft = Math.max(minLeft, hc.x + 2 - it.insets.l);
       }
       for (const r of obstaclesFor(it)) {
         if (!(r.y < bandBottom && r.y + r.h > bandTop)) continue;
@@ -4462,6 +4605,7 @@ globalThis.SlideLingo = (() => {
         if (a === b || b.locked) continue;
         if (a.container === b || b.container === a) continue;
         if (a.contents?.includes(b) || b.contents?.includes(a)) continue;
+        if (a.hostCell && b.hostCell && a.hostCell !== b.hostCell) continue;
         if (a.container && a.container === b.container && false) continue;
         const eb = origExtent(b);
         const ra = ea.rect, rb = eb.rect;
@@ -4508,6 +4652,15 @@ globalThis.SlideLingo = (() => {
 
     const hasCtrTitle = live.some(x => x.node && phOf(x.node)?.getAttribute("type") === "ctrTitle");
     const topChromeFloor = Math.max(RF.margin, ...live.filter(x => x.chrome && x.rect.y < H * 0.25).map(x => x.rect.y + x.rect.h + 3));
+    function hostCellHeaderBottom(it) {
+      const hc = it.hostCell;
+      if (!hc) return -Infinity;
+      const lines = hc.cur?.lines || hc.orig?.lines || [];
+      const origTop = it.kind === "text" ? it.orig.top : it.origRect.y;
+      const above = lines.filter(l => l.y < origTop + 4);
+      if (above.length) return Math.max(...above.map(l => l.y + l.h));
+      return hc.rect.y + 3;
+    }
     function limitsOf(it) {
       const e = origExtent(it).rect;
       let bottom = H - RF.margin, top = RF.margin;
@@ -4517,6 +4670,17 @@ globalThis.SlideLingo = (() => {
         else if (r.y + r.h <= e.y + 2) top = Math.max(top, r.y + r.h + 2);
       }
       if (!it.chrome && e.y >= topChromeFloor - 2) top = Math.max(top, topChromeFloor);
+      if (it.hostCell) {
+        const hc = it.hostCell;
+        const headerBottom = hostCellHeaderBottom(it);
+        const cellTop = Math.max(hc.rect.y + 3, headerBottom + 3);
+        const cellBottom = hc.rect.y + hc.rect.h - 3;
+        top = Math.max(top, Math.min(cellTop, e.y));
+        bottom = Math.min(bottom, Math.max(cellBottom, cellTop + 18));
+        it.baseLimTop = top;
+        it.baseLimBottom = bottom;
+        return { bottom, top };
+      }
       if (hasCtrTitle && it.kind === "text" && it.textColor && relLum(it.textColor) > 0.85 && e.y + e.h <= H * 0.56) {
         bottom = Math.min(bottom, H * 0.505);
         return { bottom, top: Math.min(top, e.y) };
@@ -4537,15 +4701,24 @@ globalThis.SlideLingo = (() => {
       // Nối dòng hay xuống dòng được quyết định lại theo cỡ chữ hiện hành
       for (const m of mods) {
         if (m.inGroup) continue;
+        const denseCellList = Boolean(m.hostCell || m.records.length >= 4);
         for (const rec of m.records) {
           if (rec.mode !== "INLINE_APPEND" || !rec.run) continue;
           if (rec.converted) newlineToInline(rec);
-          const inl = layoutFrame(m.frame, Math.max(8, m.box.w - m.insets.l - m.insets.r), m.wrap);
-          const without = layoutFrameWithout(m, rec).lineCount;
-          if (inl.lineCount > without) inlineToNewline(rec);
+          if (denseCellList) {
+            const innerW = Math.max(8, m.box.w - m.insets.l - m.insets.r);
+            const inlH = layoutFrame(m.frame, innerW, m.wrap).height;
+            inlineToNewline(rec);
+            const nlH = layoutFrame(m.frame, innerW, m.wrap).height;
+            if (inlH <= nlH + 0.5) newlineToInline(rec);
+          } else {
+            const inl = layoutFrame(m.frame, Math.max(8, m.box.w - m.insets.l - m.insets.r), m.wrap);
+            const without = layoutFrameWithout(m, rec).lineCount;
+            if (inl.lineCount > without) inlineToNewline(rec);
+          }
         }
         // Đồng bộ xuống dòng trong cùng danh sách nhiều câu hướng dẫn nếu phần lớn các mục đã xuống dòng và không ép bố cục
-        if (!m.inTable && m.records.length >= 2 && knobs.gap >= 0.95 && knobs.lead >= 0.95) {
+        if (!m.inTable && !denseCellList && m.records.length >= 2 && knobs.gap >= 0.95 && knobs.lead >= 0.95) {
           const newlineCount = m.records.filter(r => r.converted || r.mode === "NEWLINE_AFTER" || r.mode === "EXAMPLE_NEWLINE").length;
           if (newlineCount >= Math.ceil(m.records.length / 2)) {
             for (const rec of m.records) {
@@ -4554,7 +4727,7 @@ globalThis.SlideLingo = (() => {
           }
         }
       }
-      // Bảng có ô được chèn bản dịch: tính lại chiều cao tối thiểu từng hàng
+      // Bảng có ô được chèn bản dịch: tính lại chiều cao tối thiểu từng hàng & cập nhật ranh giới ô
       for (const tblIt of tablesWithMods) {
         if (!tblIt?.table) continue;
         for (const row of tblIt.table.rows) {
@@ -4562,11 +4735,18 @@ globalThis.SlideLingo = (() => {
           for (const cm of row.cells) {
             const lay = layoutFrame(cm.item.frame, Math.max(10, cm.w - cm.marL - cm.marR), true);
             minH = Math.max(minH, lay.height + cm.marT + cm.marB);
+            if (cm.item.modified) cm.item.cur = model.measureItem(cm.item, cm.item.rect);
           }
           row.minH = minH;
         }
         if (tblIt.table.rows.some(r => r.minH > r.h + 0.5)) {
           tblIt.rowH = tblIt.table.rows.map(r => Math.max(r.h, r.minH));
+        }
+      }
+      for (const it of solids) {
+        if (it.hostCell) {
+          it.lim.top = Math.max(it.baseLimTop ?? RF.margin, hostCellHeaderBottom(it) + 3);
+          it.lim.bottom = Math.max(it.baseLimBottom ?? (H - RF.margin), it.lim.top + 18);
         }
       }
       for (const it of live) {
@@ -4645,9 +4825,9 @@ globalThis.SlideLingo = (() => {
         }
         if (changed) updateContainers(); else break;
       }
-      // Nếu phần tử chữ neo đáy/tâm mọc vượt trần lim.top (Top Bar chrome), đẩy xuống trước khi lan truyền relsDown
+      // Nếu phần tử chữ neo đáy/tâm (hoặc nằm đè trên ô bảng có tiêu đề) vượt trần lim.top, đẩy xuống trước khi lan truyền relsDown
       for (const it of solids) {
-        if (it.kind !== "text" || (it.anchor !== "b" && it.anchor !== "ctr") || !it.modified || !isMovable(it)) continue;
+        if (it.kind !== "text" || (!it.hostCell && it.anchor !== "b" && it.anchor !== "ctr") || !it.modified || !isMovable(it)) continue;
         const e = extentOf(it).rect;
         if (e.y < it.lim.top - 0.5) {
           shift(it, it.lim.top - e.y);
@@ -4692,6 +4872,7 @@ globalThis.SlideLingo = (() => {
           .sort((p, q) => origExtent(p).rect.y - origExtent(q).rect.y);
         const maxOver = Math.max(...overItems.map(it => (extentOf(it).rect.y + extentOf(it).rect.h) - it.lim.bottom));
         for (const it of pullOrder) {
+          if (it.hostCell) continue; // khung bên trong ô bảng phải giữ nguyên dưới tiêu đề ô, không kéo vượt lên trên
           const e = extentOf(it).rect;
           let ceiling = Math.max(it.lim.top, RF.margin + 6);
           for (const r of rels) {
@@ -4749,9 +4930,10 @@ globalThis.SlideLingo = (() => {
       }
       for (const m of mods) if (!m.inGroup && !m.inTable) narrowBounds(m, variant.extra?.get(m));
       for (const m of mods) if (!m.inGroup && !m.inTable && !variant.extra?.has(m)) widenBounds(m);
-      // Nối dòng chỉ khi bản dịch vừa trong các dòng sẵn có; nếu không thì xuống dòng riêng (dễ đọc, không ngắt giữa cụm)
+      // Nối dòng chỉ khi bản dịch vừa trong các dòng sẵn có; riêng danh sách trong ô bảng / nhiều dòng ưu tiên nối ngang để tránh tràn
       for (const m of mods) {
         if (m.inGroup) continue;
+        if (m.hostCell || m.records.length >= 4) continue;
         for (const rec of m.records) {
           if (rec.mode !== "INLINE_APPEND" || !rec.run) continue;
           m.k = { trans: 1, src: 1 };
@@ -4768,7 +4950,7 @@ globalThis.SlideLingo = (() => {
       const steps = [
         ["table", 0, 1],
         ["gap", 1, RF.gapFloor],
-        ["lead", 1, 0.3],
+        ["lead", 1, 0.25],
         ["pic", 1, RF.picFloor],
         ["trans", 1, RF.transFloor / RF.transRatio],
         ["src", 1, RF.srcFloor],
@@ -4829,8 +5011,112 @@ globalThis.SlideLingo = (() => {
       return solveOnce(best.variant);
     }
 
+    // ===== Auto-Scale cục bộ theo từng Textbox (ưu tiên nối ngang, co giãn dòng, thu nhỏ cỡ chữ cục bộ) =====
+    function applyLocalBoxAutofit() {
+      let adjusted = false;
+      for (const m of mods) {
+        if (m.inGroup || m.inTable) continue;
+        if (m.hostCell) {
+          m.lim.top = Math.max(m.baseLimTop ?? RF.margin, hostCellHeaderBottom(m) + 3);
+          m.lim.bottom = Math.max(m.baseLimBottom ?? (H - RF.margin), m.lim.top + 18);
+          const e0 = extentOf(m).rect;
+          if (e0.y < m.lim.top - 0.5) {
+            m.dy += m.lim.top - e0.y;
+            geomText(m);
+          }
+        }
+        let e = extentOf(m).rect;
+        let overB = (e.y + e.h) - m.lim.bottom;
+        let overT = m.lim.top - e.y;
+        if (overB <= 0.5 && overT <= 0.5) continue;
+
+        adjusted = true;
+        // Thử tận dụng chiều rộng còn trống trong ô bảng trước khi co chữ
+        if (m.hostCell) {
+          const hc = m.hostCell.rect;
+          const maxRight = hc.x + hc.w - 3 + m.insets.r;
+          const minLeft = hc.x + 2 - m.insets.l;
+          if (m.box.x > minLeft + 2 || m.box.x + m.box.w < maxRight - 2) {
+            m.box = { x: Math.min(m.box.x, minLeft), w: Math.max(m.box.w, maxRight - Math.min(m.box.x, minLeft)) };
+          }
+        }
+        // Giữ nguyên chế độ nối dòng (INLINE_APPEND) nếu rút ngắn được chiều cao của khung
+        for (const rec of m.records) {
+          if (!rec.converted) continue;
+          const beforeH = layoutFrame(m.frame, Math.max(8, m.box.w - m.insets.l - m.insets.r), m.wrap).height;
+          newlineToInline(rec);
+          const inlineH = layoutFrame(m.frame, Math.max(8, m.box.w - m.insets.l - m.insets.r), m.wrap).height;
+          if (inlineH > beforeH + 0.5) inlineToNewline(rec);
+        }
+
+        // Xác định cỡ chữ gốc nhỏ nhất trong khung để bảo toàn ngưỡng dễ đọc tối thiểu
+        let minSrcPt = Infinity, minTransBase = Infinity;
+        for (const pNode of children(m.body, A, "p")) {
+          for (const r of children(pNode, A, "r")) {
+            const rec = m.trRuns.get(r);
+            if (rec) minTransBase = Math.min(minTransBase, rec.base * rec.ratio);
+            else minSrcPt = Math.min(minSrcPt, baseRunSize(m.style, pNode, child(r, A, "rPr")));
+          }
+        }
+        if (!Number.isFinite(minSrcPt)) minSrcPt = 12;
+        if (!Number.isFinite(minTransBase)) minTransBase = 10;
+
+        geomText(m);
+        e = extentOf(m).rect;
+        if (e.y < m.lim.top - 0.5) { m.dy += m.lim.top - e.y; geomText(m); e = extentOf(m).rect; }
+        overB = (e.y + e.h) - m.lim.bottom;
+
+        for (let step = 0; step < 18 && overB > 0.5; step++) {
+          if ((m.frame.lead ?? 1) > 0.15) {
+            m.frame.lead = Math.max(0.15, (m.frame.lead ?? 1) - 0.25);
+          } else if (m.k.trans > 0.52 && minTransBase * (m.k.trans - 0.06) >= 7.0) {
+            m.k.trans = Math.max(0.52, m.k.trans - 0.06);
+          } else if (m.k.src > 0.65 && minSrcPt * (m.k.src - 0.05) >= 8.0) {
+            m.k.src = Math.max(0.65, m.k.src - 0.05);
+          } else if (m.k.trans > 0.45) {
+            m.k.trans = Math.max(0.45, m.k.trans - 0.05);
+          } else {
+            break;
+          }
+          geomText(m);
+          e = extentOf(m).rect;
+          if (e.y < m.lim.top - 0.5) { m.dy += m.lim.top - e.y; geomText(m); e = extentOf(m).rect; }
+          overB = (e.y + e.h) - m.lim.bottom;
+        }
+        m.needsNormAutofit = true;
+        log.push({ it: m.id, step: "localAutofit", trans: Math.round(m.k.trans * 100) / 100, src: Math.round(m.k.src * 100) / 100, lead: Math.round((m.frame.lead ?? 1) * 100) / 100, overB: Math.round(overB) });
+      }
+      if (!adjusted) return;
+      for (const c of live) {
+        if (!c.contents?.length) continue;
+        const r = c.origRect;
+        const origMaxB = Math.max(...c.contents.map(x => origExtent(x).rect.y + origExtent(x).rect.h));
+        const origMinT = Math.min(...c.contents.map(x => origExtent(x).rect.y));
+        const padB = Math.max(4, r.y + r.h - origMaxB);
+        const padT = Math.max(4, origMinT - r.y);
+        const curMaxB = Math.max(...c.contents.map(x => { const e2 = extentOf(x).rect; return e2.y + e2.h; }));
+        const curMinT = Math.min(...c.contents.map(x => extentOf(x).rect.y));
+        c.growB = Math.max(0, curMaxB + padB - (r.y + r.h + c.dy));
+        c.growT = Math.max(0, (r.y + c.dy) - (curMinT - padT));
+      }
+      let nextOv = 0;
+      model.ovWho = null;
+      for (const it of solids) {
+        const er = extentOf(it).rect;
+        const moved = Math.abs(it.dy) > 0.5 || it.modified || it.growB || it.growT || (it.scale && it.scale < 1) || it.rowH;
+        if (!moved) continue;
+        const o2 = Math.max(er.y + er.h - it.lim.bottom, it.lim.top - er.y);
+        if (o2 > nextOv) {
+          nextOv = o2;
+          model.ovWho = { id: it.id, why: er.y + er.h - it.lim.bottom > it.lim.top - er.y ? "bottom" : "top", v: Math.round(o2), lim: it.lim, e: [Math.round(er.y), Math.round(er.y + er.h)] };
+        }
+      }
+      result.ov = nextOv;
+    }
+
     model.ovWho = null;
     let result = solveBest();
+    if (result.ov > 0.5) applyLocalBoxAutofit();
     if (result.ov > 0.5) log.push({ step: "overflow", who: model.ovWho });
     let guard = 0;
     while (result.ov > 0.5 && guard++ < 6) {
@@ -4856,6 +5142,7 @@ globalThis.SlideLingo = (() => {
         if (m.inTable) tablesWithMods.add(m.tableItem);
       }
       result = solveBest();
+      if (result.ov > 0.5) applyLocalBoxAutofit();
     }
     const { knobs } = result;
     log.push({ step: "knobs", ...Object.fromEntries(Object.entries(knobs).map(([k, v]) => [k, Math.round(v * 1000) / 1000])), overflow: Math.round(result.ov * 10) / 10 });
@@ -4912,6 +5199,24 @@ globalThis.SlideLingo = (() => {
           }
         }
       }
+      if (!it.inTable && (it.needsNormAutofit || it.hostCell || (it.k?.src ?? 1) < 0.96 || (it.k?.trans ?? 1) < 0.92)) {
+        const docx = it.body.ownerDocument;
+        let bodyPr = child(it.body, A, "bodyPr");
+        if (!bodyPr) {
+          bodyPr = docx.createElementNS(A, "a:bodyPr");
+          it.body.insertBefore(bodyPr, it.body.firstChild);
+        }
+        const spAuto = child(bodyPr, A, "spAutoFit");
+        if (spAuto && (it.hostCell || it.needsNormAutofit)) bodyPr.removeChild(spAuto);
+        if (!child(bodyPr, A, "spAutoFit")) {
+          const noAuto = child(bodyPr, A, "noAutofit");
+          if (noAuto) bodyPr.removeChild(noAuto);
+          if (!child(bodyPr, A, "normAutofit")) {
+            const normEl = docx.createElementNS(A, "a:normAutofit");
+            insertSchemaOrdered(bodyPr, normEl, BODYPR_ORDER_AFTER_AUTOFIT);
+          }
+        }
+      }
     };
     for (const m of mods) {
       writeSizes(m);
@@ -4920,9 +5225,22 @@ globalThis.SlideLingo = (() => {
       m.frame.lead = 1;
       if (m.inGroup || m.inTable) continue;
       const g = geomText(m);
-      const outRect = m.contents?.length && (m.growB || m.growT)
+      let outRect = m.contents?.length && (m.growB || m.growT)
         ? { x: g.rect.x, y: Math.min(g.rect.y, m.origRect.y + m.dy - (m.growT || 0)), w: g.rect.w, h: Math.max(g.rect.h, m.origRect.h + (m.growB || 0) + (m.growT || 0)) }
         : g.rect;
+      if (m.hostCell) {
+        const minTopBox = m.lim.top - m.insets.t;
+        const maxBottomBox = m.hostCell.rect.y + m.hostCell.rect.h - 2;
+        if (outRect.y < minTopBox - 0.5) {
+          outRect = { ...outRect, y: minTopBox, h: Math.max(14, Math.min(outRect.h, maxBottomBox - minTopBox)) };
+          const bodyPr = child(m.body, A, "bodyPr");
+          if (bodyPr && (bodyPr.getAttribute("anchor") === "ctr" || bodyPr.getAttribute("anchor") === "b")) {
+            bodyPr.setAttribute("anchor", "t");
+          }
+        } else if (outRect.y + outRect.h > maxBottomBox) {
+          outRect = { ...outRect, h: Math.max(14, maxBottomBox - outRect.y) };
+        }
+      }
       writeRect(m.node, outRect);
     }
     for (const it of live) {
@@ -5165,7 +5483,7 @@ globalThis.SlideLingo = (() => {
           const boxHeightPt = Math.round(item?.rect?.h || entry.rect?.h || 60);
           const rPrs = descendants(entry.body, A, "rPr");
           const fontSizePt = rPrs.length ? Math.max(8, Math.min(72, Math.round((rPrs.reduce((s, r) => s + (Number(r.getAttribute("sz")) || 1600), 0) / rPrs.length) / 100))) : 16;
-          const inCard = Boolean(item?.container || (item?.filled && boxHeightPt >= 85 && boxWidthPt <= W * 0.65));
+          const inCard = Boolean(item?.hostCell || item?.container || (item?.filled && boxHeightPt >= 85 && boxWidthPt <= W * 0.65));
           const charsPerLine = Math.max(12, Math.floor((boxWidthPt - 18) / (fontSizePt * (cjkTarget ? 1.02 : 0.54))));
           const rowBudget = Math.max(20, Math.round(charsPerLine * (inCard ? (entry.actions.length >= 3 ? 1.5 : 2.1) : 2.5)));
           const charBudget = inCard ? Math.min(200, rowBudget) : Math.max(28, rowBudget);
@@ -5312,8 +5630,10 @@ globalThis.SlideLingo = (() => {
               continue;
             }
             if (aiItem.mode && (action.mode === "INLINE_APPEND" || action.mode === "NEWLINE_AFTER")) {
-              if (aiItem.mode === "paren") effectiveAction = { ...action, mode: "INLINE_APPEND", paren: true, forceNewline: false };
-              else if (aiItem.mode === "inline") effectiveAction = { ...action, mode: "INLINE_APPEND", paren: false, forceNewline: false };
+              if (item?.hostCell && entry.actions.length >= 4 && aiItem.mode === "newline") {
+                effectiveAction = { ...action, mode: "INLINE_APPEND", paren: !!action.paren, forceNewline: false };
+              } else if (aiItem.mode === "paren") effectiveAction = { ...action, mode: "INLINE_APPEND", paren: true, forceNewline: false };
+              else if (aiItem.mode === "inline") effectiveAction = { ...action, mode: "INLINE_APPEND", paren: !!action.paren, forceNewline: false };
               else if (aiItem.mode === "newline") effectiveAction = { ...action, mode: "NEWLINE_AFTER", paren: false };
             }
             if (typeof aiItem.translation === "string" && aiItem.translation.trim()) {
@@ -5333,7 +5653,7 @@ globalThis.SlideLingo = (() => {
             untranslated++;
             continue;
           }
-          const record = injectActionIntoParagraph(doc, entry.body, effectiveAction, value, lang, font, target);
+          const record = injectActionIntoParagraph(doc, entry.body, effectiveAction, value, lang, font, target, ctx);
           if (record) {
             shapeModified = true;
             placed++;

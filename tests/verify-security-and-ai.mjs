@@ -1021,4 +1021,156 @@ await test("Deck-Level Batching & Khử trùng lặp (5 slide): chỉ gọi AI 1
   assert.equal(out.report.aiUsedSlides, 5, "Cả 5 slide đều phải được áp dụng kết quả từ AI");
 });
 
+await test("Key expressions (3x2 Table + 6 overlaid phrase boxes): dịch tiêu đề ô bảng, auto-scale chống đè/tràn ô bảng & đổi màu bản dịch", async () => {
+  const s3Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:graphicFrame>
+        <p:nvGraphicFramePr><p:cNvPr id="2" name="TopBar"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>
+        <p:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(960)}" cy="${emu(44)}"/></p:xfrm>
+        <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
+          <a:tbl><a:tblGrid><a:gridCol w="${emu(220)}"/><a:gridCol w="${emu(740)}"/></a:tblGrid>
+            <a:tr h="${emu(44)}">
+              <a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600"/><a:t>Unit 2</a:t></a:r></a:p></a:txBody></a:tc>
+              <a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600"/><a:t>| Lesson 2 | Business Communication | Key expressions</a:t></a:r></a:p></a:txBody></a:tc>
+            </a:tr>
+          </a:tbl>
+        </a:graphicData></a:graphic>
+      </p:graphicFrame>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="SubCyan"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(30)}" y="${emu(50)}"/><a:ext cx="${emu(560)}" cy="${emu(32)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800" b="1"><a:solidFill><a:srgbClr val="22B8CF"/></a:solidFill></a:rPr><a:t>Key expressions: A phone call at work</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="DarkBtn"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(680)}" y="${emu(50)}"/><a:ext cx="${emu(160)}" cy="${emu(30)}"/></a:xfrm><a:solidFill><a:srgbClr val="1B365D"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400" b="1"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr><a:t>Practice</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:graphicFrame>
+        <p:nvGraphicFramePr><p:cNvPr id="5" name="ExprGrid"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>
+        <p:xfrm><a:off x="${emu(48)}" y="${emu(92)}"/><a:ext cx="${emu(864)}" cy="${emu(420)}"/></p:xfrm>
+        <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
+          <a:tbl><a:tblGrid><a:gridCol w="${emu(432)}"/><a:gridCol w="${emu(432)}"/></a:tblGrid>
+            <a:tr h="${emu(140)}">
+              <a:tc><a:tcPr anchor="t"/><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"><a:solidFill><a:srgbClr val="1B365D"/></a:solidFill></a:rPr><a:t>Starting/Answering a call</a:t></a:r></a:p></a:txBody></a:tc>
+              <a:tc><a:tcPr anchor="t"/><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"><a:solidFill><a:srgbClr val="1B365D"/></a:solidFill></a:rPr><a:t>Asking for someone</a:t></a:r></a:p></a:txBody></a:tc>
+            </a:tr>
+            <a:tr h="${emu(140)}">
+              <a:tc><a:tcPr anchor="t"/><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"><a:solidFill><a:srgbClr val="1B365D"/></a:solidFill></a:rPr><a:t>Leaving a message</a:t></a:r></a:p></a:txBody></a:tc>
+              <a:tc><a:tcPr anchor="t"/><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"><a:solidFill><a:srgbClr val="1B365D"/></a:solidFill></a:rPr><a:t>Taking a message</a:t></a:r></a:p></a:txBody></a:tc>
+            </a:tr>
+            <a:tr h="${emu(140)}">
+              <a:tc><a:tcPr anchor="t"/><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"><a:solidFill><a:srgbClr val="1B365D"/></a:solidFill></a:rPr><a:t>Checking details</a:t></a:r></a:p></a:txBody></a:tc>
+              <a:tc><a:tcPr anchor="t"/><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"><a:solidFill><a:srgbClr val="1B365D"/></a:solidFill></a:rPr><a:t>Ending a call</a:t></a:r></a:p></a:txBody></a:tc>
+            </a:tr>
+          </a:tbl>
+        </a:graphicData></a:graphic>
+      </p:graphicFrame>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="11" name="CellBoxR0C0"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(56)}" y="${emu(124)}"/><a:ext cx="${emu(416)}" cy="${emu(102)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr anchor="t"/>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Hello / Hi.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Good morning / afternoon.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ (Maria) speaking.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="12" name="CellBoxR0C1"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(488)}" y="${emu(120)}"/><a:ext cx="${emu(416)}" cy="${emu(110)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr anchor="ctr"/>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Can I speak to (Aitur Garitano), please?</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Is (Rosa) there?</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Is (Alek) in the office?</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Is that (Lukas)?</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Could I speak to ...?</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ I'd like to speak to ...</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Is ... there?</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="13" name="CellBoxR1C0"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(56)}" y="${emu(266)}"/><a:ext cx="${emu(416)}" cy="${emu(102)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr anchor="t"/>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Could I leave a message?</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ My number is...</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="14" name="CellBoxR1C1"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(488)}" y="${emu(266)}"/><a:ext cx="${emu(416)}" cy="${emu(102)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr anchor="t"/>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ I'm sorry, but she isn't here / available.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Can I take a message?</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="15" name="CellBoxR2C0"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(56)}" y="${emu(406)}"/><a:ext cx="${emu(416)}" cy="${emu(96)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr anchor="t"/>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ So, that's ...</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Is that right?</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="16" name="CellBoxR2C1"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(488)}" y="${emu(406)}"/><a:ext cx="${emu(416)}" cy="${emu(96)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr anchor="t"/>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ OK. Thanks.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>✓ Goodbye.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const buf = await makeSingleSlidePptx(s3Xml);
+  const out = await SlideLingo.convert(buf, "vi", async text => `Dịch: ${text}`, () => {}, {
+    aiTranslateSlideBatch: async ({ items }) => {
+      const map = {};
+      for (const it of items) {
+        map[it.id] = { keepEnglish: false, mode: it.mode === "NEWLINE_AFTER" ? "newline" : "inline", translation: `VN:${it.text}` };
+      }
+      return map;
+    },
+  });
+  assert.ok(out.bytes, "Slide Key expressions phải xuất ra PPTX hợp lệ");
+
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const resXml = await outZip.file("ppt/slides/slide1.xml").async("string");
+  for (const hdr of ["Starting/Answering a call", "Asking for someone", "Leaving a message", "Taking a message", "Checking details", "Ending a call"]) {
+    assert.ok(resXml.includes(`(VN:${hdr})`), `Tiêu đề bảng "${hdr}" phải được dịch gọn trong ngoặc`);
+  }
+  assert.ok(resXml.includes("VN:Could I leave a message?"), "Khung câu hàng 2 phải được dịch đồng bộ");
+  assert.ok(resXml.includes("VN:OK. Thanks."), "Khung câu hàng 3 phải được dịch đồng bộ");
+
+  const resDoc = new slEnv.DOMParser().parseFromString(resXml, "application/xml");
+  const P = "http://schemas.openxmlformats.org/presentationml/2006/main";
+  const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const sps = Array.from(resDoc.getElementsByTagNameNS(P, "sp"));
+  const findSp = name => sps.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === name);
+
+  // Kiểm tra màu bản dịch phân biệt theo màu chữ gốc
+  const runColorOf = (sp, matchText) => {
+    const runs = Array.from(sp.getElementsByTagNameNS(A, "r"));
+    const targetRun = runs.find(r => (r.textContent || "").includes(matchText));
+    return targetRun?.getElementsByTagNameNS(A, "srgbClr")[0]?.getAttribute("val");
+  };
+  assert.equal(runColorOf(findSp("SubCyan"), "VN:Key expressions"), "B4235A", "Chữ gốc màu cyan #22B8CF phải dùng bản dịch màu Rose-Berry B4235A");
+  assert.equal(runColorOf(findSp("DarkBtn"), "Luyện tập"), "FEF08A", "Chữ gốc màu trắng #FFFFFF trên nền tối phải dùng bản dịch màu vàng ấm FEF08A");
+  assert.equal(runColorOf(findSp("CellBoxR0C0"), "VN:Hello / Hi."), "1D4ED8", "Chữ gốc màu đen #000000 phải dùng bản dịch màu Cobalt Blue 1D4ED8");
+
+  // Kiểm tra khung CellBoxR0C1 (7 dòng dày) không leo lên tiêu đề "Asking for someone" (y>=115pt) và không tràn xuống hàng 2 (y+h<=232pt)
+  const r0c1 = findSp("CellBoxR0C1");
+  const r0c1Y = Number(r0c1.getElementsByTagNameNS(A, "off")[0].getAttribute("y")) / PT;
+  const r0c1H = Number(r0c1.getElementsByTagNameNS(A, "ext")[0].getAttribute("cy")) / PT;
+  assert.ok(r0c1Y >= 114, `CellBoxR0C1 (y=${r0c1Y.toFixed(1)}pt) phải nằm dưới tiêu đề Asking for someone`);
+  assert.ok(r0c1Y + r0c1H <= 232, `CellBoxR0C1 (bottom=${(r0c1Y + r0c1H).toFixed(1)}pt) không được tràn qua đáy hàng 1 (232pt) xuống Taking a message`);
+  assert.ok(r0c1.getElementsByTagNameNS(A, "normAutofit").length >= 1, "CellBoxR0C1 phải được gắn <a:normAutofit/> chuẩn ECMA-376");
+  const scaledSizes = Array.from(r0c1.getElementsByTagNameNS(A, "rPr")).map(r => Number(r.getAttribute("sz"))).filter(Boolean);
+  assert.ok(scaledSizes.some(sz => sz < 1400), `CellBoxR0C1 phải tự co font size nhỏ hơn 14pt để vừa ô: [${scaledSizes.join(",")}]`);
+});
+
 console.log(`\nHoàn tất: ${passed}/${passed} bài kiểm thử đã PASS!\n`);
