@@ -2,4 +2,5 @@
 .agents
 .git
 output_mau
+tests
 README.md

@@ -2,47 +2,45 @@
 
 > *Một bài giảng, hai ngôn ngữ.*
 
-**2mybebi** là ứng dụng web chạy hoàn toàn trên trình duyệt (single-file HTML, không cần backend server) hỗ trợ giáo viên và học viên tiếng Anh:
-1. **Chuyển đổi slide bài giảng PowerPoint (`.pptx`) sang song ngữ** mà vẫn giữ nguyên mẫu câu, hội thoại và đáp án tiếng Anh.
-2. **Biên soạn tài liệu ôn tập sau buổi học (`.docx` & `.pdf`)** từ slide `.pptx` hoặc `.pdf` bằng AI (BYOK — dùng API Key cá nhân) hoặc chế độ Offline.
+**2mybebi** là ứng dụng web chạy trên Vercel gồm giao diện [`2mybebi.html`](./2mybebi.html) kết hợp Serverless Proxy bảo mật [`api/ai.js`](./api/ai.js), hỗ trợ giáo viên và học viên tiếng Anh:
+1. **Chuyển đổi slide bài giảng PowerPoint (`.pptx`) sang song ngữ** — kết hợp AI ngữ cảnh (`openai/gpt-6-luna` qua OpenRouter) với bộ xử lý OpenXML giữ nguyên mẫu câu, hội thoại, đáp án tiếng Anh và tự động dàn lại bố cục.
+2. **Biên soạn tài liệu ôn tập sau buổi học (`.docx` & `.pdf`)** từ slide `.pptx` hoặc `.pdf` bằng `openai/gpt-6-luna` (hoặc chế độ cơ bản khi tắt AI).
+
+---
+
+## Kiến trúc AI & Bảo mật (Cài Key 1 lần trên máy chủ)
+
+Ứng dụng khóa cố định:
+- **Provider**: `openrouter`
+- **Model**: `openai/gpt-6-luna`
+- **Server Proxy**: [`/api/ai`](./api/ai.js) đọc `process.env.OPENROUTER_API_KEY` trực tiếp trên Vercel — trình duyệt **không bao giờ lưu hay nhìn thấy API Key**.
+
+### Các lớp bảo mật tích hợp
+- **Chống lộ API Key**: Không lưu key trong `localStorage`, DOM hay bundle frontend; toàn bộ thông báo lỗi được lọc qua `redactSecrets` ở cả server và client; tự động xóa `2mybebi_ai_config_v1` cũ nếu từng tồn tại.
+- **Chống lạm dụng Proxy `/api/ai`**: Kiểm tra `Origin`/`Referer` cùng host (`isOriginAllowed`), giới hạn tần suất theo IP (`40 requests/phút`), giới hạn payload `256 KB` / `160.000` ký tự, hỗ trợ tùy chọn mã truy cập một lần theo máy (`APP_ACCESS_CODE`, so khớp SHA-256 `timingSafeEqual`).
+- **Chống mã độc tài liệu (`DocSecurity`)**:
+  - Chặn macro (`ppt/vbaProject.bin`, `vbaData.xml`), chữ ký số (`_xmlsignatures/`), ActiveX (`ppt/activeX/`), đối tượng nhúng OLE (`ppt/embeddings/`), tệp thực thi, zip-bomb và đường dẫn `Zip-Slip`.
+  - Chặn `<!DOCTYPE>` / `<!ENTITY>` (XXE) khi đọc XML OpenXML.
+  - Làm sạch `.rels` và `hlinkClick`/`hlinkHover`: giữ nguyên các liên kết học tập `http://` và `https://` hợp lệ trong slide gốc, đồng thời gỡ bỏ `javascript:`, `vbscript:`, `data:`, `file:`, `ms-msdt:`, `ppaction://program` và các `oleObject`/`attachedTemplate` ngoại lai.
+  - Lọc XSS/HTML/SVG, vô hiệu hóa Office DDE formula injection (`=cmd|`, `=HYPERLINK(`, `+cmd|`, `-cmd|`, `@SUM(...)*cmd|`) trong bảng/nội dung xuất ra.
+  - In PDF Vector qua `Blob URL` với `<meta http-equiv="Content-Security-Policy" ... script-src 'none'>` thay cho `document.write`.
 
 ---
 
 ## Tính năng chính
 
 ### 1. Tạo Slide song ngữ (`.pptx`)
-- **Xử lý hàng loạt**: Tải lên nhiều tệp `.pptx` cùng lúc (tối đa `60 MB`/tệp).
-- **Bảo toàn ngữ cảnh tiếng Anh**: Dịch chỉ dẫn, ghi chú và phần giải thích sang ngôn ngữ đích trong khi giữ nguyên mẫu câu, hội thoại và đáp án tiếng Anh.
-- **Tự động căn chỉnh bố cục (Auto-reflow)**: Tự điều chỉnh khung chữ (`textbox`) và dịch cả `Speaker Notes`, xuất ra tệp `*_EN-<LANG>.pptx` hoặc đóng gói `.zip`.
-- **Nén ảnh PPTX tích hợp (`PptxCompressor`)**: Giảm dung lượng hình ảnh độ phân giải cao ngay trong trình duyệt, hỗ trợ nén riêng từng tệp và tải bản `*_compressed.pptx`.
-- **Hỗ trợ 12 ngôn ngữ đích**: Tiếng Việt (`vi`), Tiếng Nhật (`ja`), Tiếng Hàn (`ko`), Tiếng Trung giản thể (`zh`), Tiếng Trung phồn thể (`zh-Hant`), Tiếng Pháp (`fr`), Tiếng Tây Ban Nha (`es`), Tiếng Đức (`de`), Tiếng Bồ Đào Nha (`pt`), Tiếng Indonesia (`id`), Tiếng Thái (`th`), Tiếng Nga (`ru`).
-- **Cơ chế dịch**: Ưu tiên Chrome Built-in `Translator` API (offline trên trình duyệt hỗ trợ) và tự động fallback sang `translate.googleapis.com`.
+- **AI xử lý ngữ cảnh theo slide (`GPT-6 Luna`)**: Phân biệt thông minh câu hướng dẫn/tiêu đề/mục tiêu/giải thích ngữ pháp cần dịch với câu bài tập, hội thoại, đáp án cần giữ nguyên tiếng Anh; tự động chuyển về Chrome `Translator` hoặc `translate.googleapis.com` nếu tắt AI.
+- **Bảo toàn mẫu câu & placeholder**: Giữ nguyên mẫu câu trong dấu `"..."`, `[placeholder]` và ký hiệu IPA `/.../` đúng chuẩn OpenXML (`p:txBody`), tự co giãn/reflow tránh đè khung và dịch `Speaker Notes`.
+- **Nén ảnh PPTX tích hợp (`PptxCompressor`)** và xử lý hàng loạt tối đa `60 MB`/tệp.
 
-### 2. Biên soạn Tài liệu ôn tập sau buổi học (`.pptx`, `.pdf` → `.docx` & `.pdf`)
-- **Trích xuất nội dung sâu**:
-  - `.pptx`: Đọc toàn bộ slide bằng `JSZip v3.10.1` nhúng sẵn, hỗ trợ text thông thường, bảng, SmartArt (`diagramData`), sơ đồ mũi tên, từ điền khuyết và `Speaker Notes`.
-  - `.pdf`: Trích xuất văn bản qua `pdf.js v3.11.174` (kèm bộ giải nén Flate fallback).
-- **Phân tích cấu trúc bài học bằng AI (BYOK) hoặc Offline**:
-  - Tự nhận diện bố cục từng bài học (từ vựng, ngữ pháp, mẫu câu giao tiếp thực tế, hội thoại, phát âm, ghi nhớ/bài tập) và biên soạn tài liệu ôn tập bằng ngôn ngữ đã chọn.
-  - Trích dẫn trực tiếp ví dụ và mẫu câu ứng dụng từ slide gốc, hỗ trợ thẻ hội thoại 2 dòng (`dialogue`) và pill nhấn mạnh điểm ngữ pháp `[[...]]`.
-- **Trình bày chuẩn Academic Aesthetic**:
-  - Xem trước trực tiếp theo khổ A4 ngay trên giao diện.
-  - Xuất từng bài hoặc gộp nhiều bài thành bộ tài liệu `.docx` (Word), `.pdf` (Vector PDF qua hộp thoại in của trình duyệt), hoặc tải tất cả dưới dạng `.zip`.
-  - Tài liệu đầu ra sạch sẽ, không chèn footer hay tên công cụ.
+### 2. Biên soạn Tài liệu ôn tập (`.pptx`, `.pdf` → `.docx` & `.pdf`)
+- Trích xuất sâu văn bản, bảng, SmartArt (`diagramData`) và `Speaker Notes`.
+- Xuất `.docx` (Word), `.pdf` (A4 Vector qua hộp thoại in an toàn) hoặc đóng gói `.zip` không chứa footer/tên công cụ.
 
----
-
-## Nhà cung cấp AI hỗ trợ (BYOK)
-
-API Key của bạn được lưu cục bộ trong `localStorage` của trình duyệt (`2mybebi_ai_config_v1`) và gọi `fetch()` trực tiếp từ trình duyệt tới nhà cung cấp AI (không đi qua máy chủ trung gian). Giao diện hỗ trợ nút **Hiện / Ẩn**, **Kiểm tra** kết nối (timeout 25s) và **Xóa** key.
-
-| Nhà cung cấp | Các mô hình (Model) cấu hình sẵn | Ghi chú |
-| :--- | :--- | :--- |
-| **Google Gemini** | `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-2.0-flash` | Khuyên dùng `gemini-2.5-flash` cho tốc độ nhanh và ổn định |
-| **OpenAI** | `gpt-4o`, `gpt-4o-mini`, `gpt-4.1`, `gpt-4.1-mini` | Hỗ trợ JSON mode chuẩn |
-| **Anthropic** | `claude-sonnet-4-20250514`, `claude-3-7-sonnet-latest`, `claude-3-5-haiku-latest` | Gửi kèm header `anthropic-dangerous-direct-browser-access: true` để gọi trực tiếp từ trình duyệt |
-| **OpenAI-Compatible** | Tự nhập Base URL & Model (mặc định OpenRouter `https://openrouter.ai/api/v1`, `google/gemini-2.5-flash`) | Phù hợp cho OpenRouter, Groq, Together, LM Studio, v.v. |
-| **Chế độ Offline** | `offline` | Không cần API Key, tự tổng hợp theo rule cơ bản từ nội dung slide |
+### 3. Giao diện Pastel Gradient Mesh & Nhạc nền Chill thủ công
+- Bố cục 2 cột rộng trên desktop (`left-rail` + `workbench`), hiệu ứng Gradient Mesh nhẹ nhàng có hỗ trợ `prefers-reduced-motion`.
+- Thẻ nghe nhạc nền chill nhúng từ YouTube (chỉ phát khi người dùng tự bấm nút Play, có nút **Thu gọn / Mở trình phát**).
 
 ---
 
@@ -50,68 +48,50 @@ API Key của bạn được lưu cục bộ trong `localStorage` của trình d
 
 ```text
 .
-├── 2mybebi.html                                  # Toàn bộ ứng dụng web (HTML/CSS/JS + JSZip nhúng sẵn)
-├── vercel.json                                   # Cấu hình rewrite "/" -> "/2mybebi.html" & header bảo mật cho Vercel
-├── .vercelignore                                 # Loại trừ tệp mẫu/cục bộ khi upload lên Vercel
-├── .gitignore                                    # Bỏ qua .DS_Store, .agents/, .vercel/, .env
-├── README.md                                     # Tài liệu hướng dẫn dự án
-└── output_mau/                                   # Một số tệp mẫu tham khảo
-    ├── BE1_Lesson6_EN-JA_reflow_mau.pptx         # Mẫu slide PPTX song ngữ
-    ├── BE1_Lesson6_Review_VI.docx                # Mẫu tài liệu ôn tập Word (.docx)
-    └── BE1_Lesson6_Review_VI.pdf                 # Mẫu tài liệu ôn tập PDF (.pdf)
-```
-
-> **Lưu ý về thư viện ngoài khi chạy**: Ứng dụng dùng CDN `fonts.googleapis.com` (`Noto Sans`) và `cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js` (tải khi xử lý tệp `.pdf`). Các tác vụ tạo `.pptx`/`.docx` dùng `JSZip` đã được nhúng trực tiếp trong `2mybebi.html`.
-
----
-
-## Chạy thử trên máy cá nhân (Local)
-
-Bạn có thể mở trực tiếp tệp [`2mybebi.html`](./2mybebi.html) bằng trình duyệt (Chrome/Edge/Safari/Firefox), hoặc khởi chạy một static HTTP server nhỏ để đảm bảo mọi API trình duyệt hoạt động ổn định nhất:
-
-```bash
-python3 -m http.server 8000
-```
-
-Sau đó mở trình duyệt và truy cập:
-
-```text
-http://localhost:8000/2mybebi.html
+├── 2mybebi.html                        # Giao diện + Engine OpenXML / PDF / DocSecurity
+├── api/
+│   └── ai.js                           # Vercel Serverless Function proxy tới OpenRouter (GPT-6 Luna)
+├── tests/
+│   └── verify-security-and-ai.mjs      # Bộ kiểm thử bảo mật, OpenXML & /api/ai (Node.js)
+├── vercel.json                         # Rewrite "/" -> "/2mybebi.html", CSP & timeout /api/ai
+├── .vercelignore                       # Loại trừ output_mau/ và tests/ khi deploy
+├── .gitignore
+├── README.md
+└── output_mau/                         # Tài liệu mẫu tham khảo (không deploy lên Vercel)
 ```
 
 ---
 
-## Hướng dẫn đẩy dự án lên GitHub
+## Kiểm thử cục bộ & Chạy thử với Vercel CLI
 
-Repository đã được cấu hình sẵn `.gitignore` và commit ban đầu tại nhánh `main`. Bạn chỉ cần tạo repository trống trên GitHub rồi thêm `remote` và push:
-
+### Chạy bộ kiểm thử tự động (Node >= 18, không cần cài thư viện ngoài)
 ```bash
-git remote add origin https://github.com/<ten-tai-khoan>/<ten-repo>.git
-git push -u origin main
+node tests/verify-security-and-ai.mjs
 ```
+
+### Chạy đầy đủ cả frontend + `/api/ai` trên máy cá nhân
+1. Tạo biến môi trường `.env.local` (đã nằm trong `.gitignore`, **không bao giờ commit**):
+   ```bash
+   OPENROUTER_API_KEY=sk-or-v1-...
+   # Tùy chọn nếu muốn khóa thêm 1 lớp mã truy cập khi dùng web:
+   # APP_ACCESS_CODE=mat-khau-nhom-cua-ban
+   ```
+2. Khởi chạy bằng Vercel CLI:
+   ```bash
+   vercel dev
+   ```
+   Sau đó mở trình duyệt tại `http://localhost:3000`.
 
 ---
 
-## Hướng dẫn deploy lên Vercel
+## Hướng dẫn cấu hình & Deploy lên Vercel
 
-Dự án đã có sẵn [`vercel.json`](./vercel.json) tự động rewrite đường dẫn gốc `/` sang `/2mybebi.html` (tránh lỗi `404` khi deploy static) và [`.vercelignore`](./.vercelignore) để bỏ qua `output_mau/` giúp bản deploy nhẹ và nhanh hơn.
-
-### Cách A: Deploy tự động qua Vercel Dashboard (Kết nối GitHub)
-1. Đăng nhập [Vercel](https://vercel.com) → chọn **Add New… → Project**.
-2. Chọn repository GitHub vừa push.
-3. Trong phần **Configure Project**:
-   - **Framework Preset**: `Other`
-   - **Build Command**: *(để trống / tắt Override)*
-   - **Output Directory**: `.` *(hoặc để mặc định)*
-4. Nhấn **Deploy**. Mọi lần `git push` sau đó lên nhánh `main` sẽ tự động deploy bản mới.
-
-### Cách B: Deploy nhanh bằng Vercel CLI
-Nếu đã cài Node.js, chạy các lệnh sau tại thư mục dự án:
-
-```bash
-npm i -g vercel
-vercel login
-vercel --prod
-```
-
-*(Khi Vercel CLI hỏi `Want to modify these settings?`, giữ nguyên Output Directory là `.` và không cần lệnh build.)*
+1. Đẩy mã nguồn lên GitHub:
+   ```bash
+   git push origin main
+   ```
+2. Trên **Vercel Dashboard → Project → Settings → Environment Variables**, thêm:
+   - `OPENROUTER_API_KEY`: API key OpenRouter của bạn (**bắt buộc**, chọn Production + Preview).
+   - `APP_ACCESS_CODE` *(tùy chọn)*: Nếu bạn muốn chỉ những người có mã này mới gọi được AI; khi bật, web tự hiện ô nhập 1 lần để lưu trên máy đó.
+   - `ALLOWED_ORIGINS` *(tùy chọn)*: Tên miền custom khác nếu bạn gắn domain riêng ngoài domain mặc định của Vercel.
+3. Trong **Build & Deployment**: giữ **Framework Preset** = `Other`, **Build Command** trống, **Output Directory** mặc định `.`, rồi **Redeploy** để kích hoạt Environment Variables.
