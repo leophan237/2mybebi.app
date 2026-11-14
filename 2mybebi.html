@@ -2186,7 +2186,7 @@ globalThis.SlideLingo = (() => {
   }
 
   const heading = /^(?:\d+[.)]\s*)?(?:(?:unit|lesson|chapter)\s*\d+\b|vocabulary\b|pronunciation\b|grammar\b|objectives?\b|practice\b|warm[- ]?up\b|wrap[- ]?up\b|summary\b|assignment\b|extra practice\b|reflection\b|self[- ]reflection\b|learning goals?\b|fun facts?\b|role[- ]?play\b|before project\b|during project\b|after project\b|thank(?:s| you)\b|conversation\b|pair\s*work\b|group\s*work\b|individual\s*work\b|key\s*expressions?\b|useful\s*(?:expressions?|phrases?|language)\b|creative\s*speaking(?:\s*practice)?\b|speaking(?:\s*practice)?\b|listening(?:\s*practice)?\b|reading(?:\s*practice)?\b|writing(?:\s*practice)?\b|communication\b|discussion\b|scenario\b|situation\b|exercise\s*\d*\b|activity\s*\d*\b|task\s*\d*\b|language\s*(?:focus|notes?)\b)/i;
-  const directions = /^(?:activity\s*\d+\s*[:.]\s*|(?:instructions?|directions|task|step)\s*\d*\s*[:.]\s*)?(?:read|reading|listen|watch|look|choose|match|complete|fill|order|reorder|arrange|work|use|put|make|making|give|create|form|build|take|change|turn|switch|swap|rewrite|unscramble|categorize|classify|sort|brainstorm|describe|introduce|explain|identify|name|list|tell|discuss|say|ask|answer|write|mark|circle|underline|repeat|practice|practise|role[- ]play|check|decide|find|select|compare|reflect|think about|talk|guess|label|share|present|prepare|imagine|suppose|pretend)\b/i;
+  const directions = /^(?:activity\s*\d+\s*[:.]\s*|(?:instructions?|directions|task|step)\s*\d*\s*[:.]\s*)?(?:read|reading|listen|watch|look|choose|match|complete|fill|order|reorder|arrange|work|use|put|make|making|give|create|form|build|take|change|turn|switch|swap|rewrite|unscramble|categorize|classify|sort|brainstorm|describe|introduce|explain|identify|name|list|tell|discuss|say|ask|answer|write|mark|circle|underline|repeat|practice|practise|role[- ]play|check|decide|find|select|compare|reflect|think about|talk|guess|label|share|present|prepare|imagine|suppose|pretend|aim|expect|focus|agree|propose|suggest|negotiate|confirm|schedule|review|reach|offer|respond|greet|thank|apologize|decline|accept|lead|manage|handle|solve|resolve|prioritize|summarize|outline|highlight|encourage|convince|persuade|clarify|express)\b/i;
   const explicit = /^(?:instructions?|directions|scenario|situation|context|learning objectives?|your (?:task|role|plans?|goal|aim|job)\b|you are\b|work (?:in|with)\b|in (?:pairs?|groups?)\b|pair\s*work\b|group\s*work\b|key\s*expressions?\b|useful\s*(?:expressions?|phrases?|language)\b|homework|assignment|in today[’']s lesson|in this (?:conversation|dialogue|lesson|activity|exercise|part|section|unit|table|chart)|today you will|by the end|(?:then\s+)?let[’']s|you (?:should|can|will|need to|must)\b|make sure (?:you )?(?:can|to)?\b|remember to\b|don[’']t forget to\b|be ready to\b|prepare to\b|are there any (?:words|questions)|do you have any questions|below is the list|origin of the word|follow(?:ing)? the pattern|use the pattern|each (?:student|pair|group|team|person|partner)|student [ab12]\b|one student\b|partner [ab12]\b|the (?:interviewer|interviewee|speaker|listener|caller|receiver|student|partner)\s+(?:asks?|answers?|writes?|reads?|says?|listens?|takes?|chooses?|checks?)\b|then\s+(?:swap|switch|change|share|present|ask|answer)|we use\b|it (?:gives|shows|means|helps|expresses|describes|is used)\b)/i;
   const teacher = /^(?:teacher\b|notes?\s*:|answer key\b|possible answer\b|transcript\b|script\b)/i;
   const examplePrefix = /^(?:examples?|sample\s+answers?|models?|e\.g\.)\s*[:.]\s*/i;
@@ -2737,8 +2737,12 @@ globalThis.SlideLingo = (() => {
         };
 
         const actions = [];
-        let boxHasPrimaryInstruction = (slideHasPrimaryInstruction && rect && rect.y < H * 0.28) || shapeContext.grammar;
+        let boxHasPrimaryInstruction = (slideHasPrimaryInstruction && rect && rect.y < H * 0.28) ||
+          shapeContext.grammar ||
+          /^(?:student|partner)\s+[ab12]\b|^scenario\b|^situation\b/i.test(nonEmpty[0]);
         let boxIsExampleBlock = false;
+        const filledShape = isFilled(node);
+        const inTopHeaderZone = rect && rect.y < H * 0.22;
         for (let i = 0; i < pNodes.length; i++) {
           const t = pTexts[i];
           if (!t) continue;
@@ -2747,10 +2751,18 @@ globalThis.SlideLingo = (() => {
             const wc = t.split(/\s+/).filter(Boolean).length;
             const looksSkip = /^(?:[a-d]|[1-9]\d?)[.)]\s/i.test(t) || /^\/[^/]+\/$/.test(t) || /^\d+(?:[.,:/-]\d+)*%?$/.test(t) || /^https?:\/\//i.test(t);
             if (!looksSkip) {
-              if (wc >= 4 || /[:.?!]$/.test(t)) {
-                act = { mode: wc <= 6 ? "NEWLINE_AFTER" : "INLINE_APPEND", sourceText: t, hasPattern: hasProtectedPattern(t), needsAiTriage: true };
-              } else if (/^[A-Z]/.test(t) && wc >= 1 && wc <= 4) {
-                act = { mode: "NEWLINE_AFTER", sourceText: t, hasPattern: hasProtectedPattern(t), needsAiTriage: true, aiOnly: true };
+              const isColonLead = /^[A-Z][A-Za-z0-9\s'’/&-]{2,55}:\s*$/.test(t);
+              const isShortUiOrTitle = wc >= 1 && wc <= 5 && /^[A-Z]/.test(t) && (filledShape || inTopHeaderZone);
+              const isInInstructionBox = boxHasPrimaryInstruction && (wc >= 3 || /[:.?!]$/.test(t));
+              if (isColonLead || isInInstructionBox || isShortUiOrTitle) {
+                const isClearDirective = isColonLead || directions.test(t) || explicit.test(t) || isGlossaryHeading(t);
+                act = {
+                  mode: (isColonLead || isShortUiOrTitle || wc <= 6) ? "NEWLINE_AFTER" : "INLINE_APPEND",
+                  sourceText: t,
+                  hasPattern: hasProtectedPattern(t),
+                  needsAiTriage: true,
+                  aiOnly: !isClearDirective,
+                };
               }
             }
           }
@@ -5090,27 +5102,34 @@ globalThis.SlideLingo = (() => {
       report.warnings.push({ number: 0, text: `Đã tự động loại bỏ ${strippedArchiveRels} liên kết/đối tượng ngoài không an toàn khỏi tệp gốc.` });
     }
     const aiBatchFn = typeof options?.aiTranslateSlideBatch === "function" ? options.aiTranslateSlideBatch : null;
+    const cjkTarget = target === "ja" || target === "zh" || target === "ko";
+    const slideJobs = [];
+    const actionDedupKey = new WeakMap();
+    const uniqueAiMap = new Map();
+    const aiDecisionByDedupKey = new Map();
+
+    // Pha 1: Quét, khử độc OpenXML và đo hình học toàn bộ slide trong bộ nhớ
     for (const [index, id] of ids.entries()) {
       const number = index + 1;
-      update({number,total:ids.length,phase:aiBatchFn ? "ai" : "translate"});
-      const path = resolve(main,relMap.get(id.getAttributeNS(R,"id")));
-      const doc = await part(zip,path);
+      update({ number, total: ids.length, phase: aiBatchFn ? "ai" : "translate" });
+      const path = resolve(main, relMap.get(id.getAttributeNS(R, "id")));
+      const doc = await part(zip, path);
       const slideSec = await sanitizeSlideAndRels(zip, doc, path);
       if (slideSec.removedCount > 0) {
         report.strippedUnsafeCount += slideSec.removedCount;
         zip.file(path, serializer.serializeToString(doc));
       }
-      const tree = child(child(doc.documentElement,P,"cSld"),P,"spTree");
-      if (!tree) throw Error("Slide "+number+" có cấu trúc không được hỗ trợ.");
-      const existing = descendants(tree,P,"cNvPr");
-      const marker = "Slide Lingo bilingual support "+lang;
-      if (existing.some(n=>n.getAttribute("descr") === marker)) {
-        report.warnings.push({number,text:"Đã có phần dịch của công cụ cho ngôn ngữ này."});
+      const tree = child(child(doc.documentElement, P, "cSld"), P, "spTree");
+      if (!tree) throw Error("Slide " + number + " có cấu trúc không được hỗ trợ.");
+      const existing = descendants(tree, P, "cNvPr");
+      const marker = "Slide Lingo bilingual support " + lang;
+      if (existing.some(n => n.getAttribute("descr") === marker)) {
+        report.warnings.push({ number, text: "Đã có phần dịch của công cụ cho ngôn ngữ này." });
         continue;
       }
-      const source = candidates(doc,tree,number,W,H);
+      const source = candidates(doc, tree, number, W, H);
       if (!source.length) {
-        const remaining = descendants(tree,P,"sp").filter(sp => {
+        const remaining = descendants(tree, P, "sp").filter(sp => {
           const ps = extract(sp);
           if (!ps.length || ps.some(t => teacher.test(t))) return false;
           return ps.some(t =>
@@ -5121,37 +5140,23 @@ globalThis.SlideLingo = (() => {
             !/^homework\s*&\s*lesson\s+preparation\s+check$/i.test(t)
           );
         });
-        if (remaining.length) report.warnings.push({number,text:"Chưa nhận diện được nội dung cần dịch. Hãy kiểm tra slide này."});
+        if (remaining.length) report.warnings.push({ number, text: "Chưa nhận diện được nội dung cần dịch. Hãy kiểm tra slide này." });
         continue;
       }
-      const occupants = Array.from(tree.children).map(node=>({node,rect:shapeRect(node)}))
-        .filter(({node,rect})=>rect && !(node.localName==="pic" && rect.w>=W*.86 && rect.h>=H*.86));
-      const targets = new Set(descendants(child(doc.documentElement,P,"timing"),P,"spTgt").map(t=>t.getAttribute("spid")));
-      let placed = 0;
-      let untranslated = 0;
-      const notes = [];
-      const modifiedEntries = [];
+      const targets = new Set(descendants(child(doc.documentElement, P, "timing"), P, "spTgt").map(t => t.getAttribute("spid")));
 
-      // Mô hình bố cục được dựng TRƯỚC khi gọi AI và trước khi chèn để cấp thông số kích thước hộp/thẻ cho AI và giữ hình học gốc làm chuẩn
+      // Dựng mô hình hình học trước khi gọi AI để lấy đúng kích thước từng khung/thẻ (trì hoãn buildBackdrop sang Pha 4)
+      let ctx = null;
       let model = null;
       try {
-        const ctx = await loadSlideContext(zip, path, presentation, partCache);
+        ctx = await loadSlideContext(zip, path, presentation, partCache);
         model = buildLayoutModel(ctx, doc, tree, W, H);
-        try {
-          const bd = await buildBackdrop(zip, ctx, doc, W, H, partCache);
-          if (bd) model.contrastOK = makeContrastTest(bd);
-        } catch (err) { console.error("[SL] backdrop", number, err); }
         for (const it of model.textByNode.values()) it.textColor = textColorOf(ctx, it);
       } catch (err) {
         console.error("[SL] layout model", number, err);
       }
 
-      // AI xử lý ngữ cảnh & kích thước từng khung trước khi chèn OpenXML (khi bật AI)
-      const aiResultsByAction = new WeakMap();
       if (aiBatchFn) {
-        const batchItems = [];
-        const itemActionRef = new Map();
-        const cjkTarget = target === "ja" || target === "zh" || target === "ko";
         for (const entry of source) {
           const isAnimated = entry.ids.some(spId => targets.has(spId));
           if (isAnimated && entry.text.length < 30 && !directions.test(entry.text)) continue;
@@ -5164,56 +5169,128 @@ globalThis.SlideLingo = (() => {
           const charsPerLine = Math.max(12, Math.floor((boxWidthPt - 18) / (fontSizePt * (cjkTarget ? 1.02 : 0.54))));
           const rowBudget = Math.max(20, Math.round(charsPerLine * (inCard ? (entry.actions.length >= 3 ? 1.5 : 2.1) : 2.5)));
           const charBudget = inCard ? Math.min(200, rowBudget) : Math.max(28, rowBudget);
+          const budgetBucket = Math.round(charBudget / 30);
+
           for (const action of entry.actions) {
             const glossKey = normalizeGlossaryKey(action.sourceText);
             if (GLOSSARY[target]?.[glossKey]) continue;
-            const cacheKey = target + "::" + action.sourceText;
-            if (memo.has(cacheKey)) continue;
-            const itemId = "a" + batchItems.length;
-            batchItems.push({
-              id: itemId,
-              text: action.sourceText,
-              mode: action.mode,
-              isInstruction: directions.test(action.sourceText) || explicit.test(action.sourceText) || isGlossaryHeading(action.sourceText),
-              boxWidthPt,
-              boxHeightPt,
-              fontSizePt,
-              inCard,
-              charBudget,
-              needsAiTriage: Boolean(action.needsAiTriage),
-            });
-            itemActionRef.set(itemId, action);
+            const dKey = `${target}::${inCard ? "C" : "W"}::${budgetBucket}::${action.sourceText}`;
+            actionDedupKey.set(action, dKey);
+            if (!uniqueAiMap.has(dKey)) {
+              uniqueAiMap.set(dKey, {
+                dedupKey: dKey,
+                id: "a" + uniqueAiMap.size,
+                text: action.sourceText,
+                mode: action.mode,
+                isInstruction: directions.test(action.sourceText) || explicit.test(action.sourceText) || isGlossaryHeading(action.sourceText),
+                boxWidthPt,
+                boxHeightPt,
+                fontSizePt,
+                inCard,
+                charBudget,
+                needsAiTriage: Boolean(action.needsAiTriage),
+              });
+            }
           }
         }
-        if (batchItems.length) {
+      }
+
+      slideJobs.push({ number, path, doc, tree, marker, source, targets, ctx, model });
+    }
+
+    // Pha 2: Gom lô AI toàn bài giảng (Deck-Level Batching & Deduplication)
+    if (aiBatchFn && uniqueAiMap.size) {
+      const uniqueItems = Array.from(uniqueAiMap.values());
+      const MAX_ITEMS_PER_AI_BATCH = 40;
+      const chunks = [];
+      for (let i = 0; i < uniqueItems.length; i += MAX_ITEMS_PER_AI_BATCH) {
+        chunks.push(uniqueItems.slice(i, i + MAX_ITEMS_PER_AI_BATCH));
+      }
+      const AI_CONCURRENCY = 2;
+      for (let i = 0; i < chunks.length; i += AI_CONCURRENCY) {
+        const wave = chunks.slice(i, i + AI_CONCURRENCY);
+        await Promise.all(wave.map(async (chunk, wIdx) => {
           try {
-            const slideContextTexts = descendants(tree, P, "sp").flatMap(extract).slice(0, 40);
+            const batchIdx = i + wIdx + 1;
+            update({ number: Math.min(ids.length, Math.max(1, Math.round((batchIdx / chunks.length) * ids.length))), total: ids.length, phase: "ai" });
             const aiMap = await aiBatchFn({
-              slideNumber: number,
-              totalSlides: ids.length,
+              slideNumber: batchIdx,
+              totalSlides: chunks.length,
               target,
               targetLabel,
-              slideContextTexts,
-              items: batchItems,
+              slideContextTexts: [],
+              items: chunk.map(({ dedupKey, ...rest }) => rest),
             });
             if (aiMap && typeof aiMap === "object") {
-              report.aiUsedSlides++;
-              for (const [itemId, res] of Object.entries(aiMap)) {
-                const refAction = itemActionRef.get(itemId);
-                if (refAction && res && typeof res === "object") {
-                  aiResultsByAction.set(refAction, res);
+              for (const itemObj of chunk) {
+                const res = aiMap[itemObj.id];
+                if (res && typeof res === "object") {
+                  aiDecisionByDedupKey.set(itemObj.dedupKey, res);
                 }
               }
             }
           } catch (aiErr) {
             const safeMsg = globalThis.DocSecurity.redactSecrets(aiErr?.message || "AI tạm thời không phản hồi");
-            report.warnings.push({ number, text: `AI không xử lý được slide này (${safeMsg}); đã tự chuyển sang dịch dự phòng.` });
+            report.warnings.push({ number: 0, text: `Một lô xử lý AI gặp lỗi (${safeMsg}); tự động dùng dịch dự phòng cho các câu chưa có kết quả.` });
+          }
+        }));
+      }
+    }
+
+    // Pha 3: Dịch dự phòng song song (concurrency=6) cho các câu chưa có kết quả AI / không nằm trong Glossary
+    const fallbackPending = new Map();
+    for (const job of slideJobs) {
+      for (const entry of job.source) {
+        const isAnimated = entry.ids.some(spId => job.targets.has(spId));
+        if (isAnimated && entry.text.length < 30 && !directions.test(entry.text)) continue;
+        for (const action of entry.actions) {
+          const glossKey = normalizeGlossaryKey(action.sourceText);
+          if (GLOSSARY[target]?.[glossKey]) continue;
+          const dKey = actionDedupKey.get(action);
+          const aiItem = dKey ? aiDecisionByDedupKey.get(dKey) : null;
+          const mandatoryKeepTranslating =
+            directions.test(action.sourceText) ||
+            explicit.test(action.sourceText) ||
+            isGlossaryHeading(action.sourceText) ||
+            /^lesson\s*\d+/i.test(action.sourceText);
+          if (action.aiOnly && !aiItem) continue;
+          if (aiItem?.keepEnglish === true && !mandatoryKeepTranslating) continue;
+          const aiVal = typeof aiItem?.translation === "string"
+            ? globalThis.DocSecurity.sanitizeSafeText(aiItem.translation, { formulaSafe: true }).trim()
+            : "";
+          if (aiVal && aiVal.length <= 3400 && clean(aiVal) !== clean(action.sourceText)) continue;
+          const cacheKey = target + "::" + action.sourceText;
+          if (!memo.has(cacheKey) && !fallbackPending.has(cacheKey)) {
+            fallbackPending.set(cacheKey, action.sourceText);
           }
         }
       }
+    }
+    if (fallbackPending.size) {
+      const fbQueue = Array.from(fallbackPending.values());
+      let cursor = 0;
+      const FB_CONCURRENCY = Math.min(6, fbQueue.length);
+      await Promise.all(Array.from({ length: FB_CONCURRENCY }, async () => {
+        while (cursor < fbQueue.length) {
+          const idx = cursor++;
+          const txt = fbQueue[idx];
+          await translateSmart(txt, target, translate, memo).catch(() => null);
+        }
+      }));
+    }
+
+    // Pha 4: Chèn OpenXML, kiểm tra tương phản nền có chọn lọc & giải bố cục Reflow từng slide
+    for (const job of slideJobs) {
+      const { number, path, doc, tree, marker, source, targets, ctx, model } = job;
+      update({ number, total: ids.length, phase: "translate" });
+      let placed = 0;
+      let untranslated = 0;
+      let slideUsedAi = false;
+      const notes = [];
+      const modifiedEntries = [];
 
       for (const entry of source) {
-        const isAnimated = entry.ids.some(id=>targets.has(id));
+        const isAnimated = entry.ids.some(spId => targets.has(spId));
         if (isAnimated && entry.text.length < 30 && !directions.test(entry.text)) continue;
 
         let shapeModified = false;
@@ -5221,7 +5298,9 @@ globalThis.SlideLingo = (() => {
         for (const action of entry.actions) {
           let value = null;
           let effectiveAction = action;
-          const aiItem = aiResultsByAction.get(action);
+          const dKey = actionDedupKey.get(action);
+          const aiItem = dKey ? aiDecisionByDedupKey.get(dKey) : null;
+          if (aiItem) slideUsedAi = true;
           if (action.aiOnly && !aiItem) continue;
           if (aiItem) {
             const mandatoryKeepTranslating =
@@ -5278,34 +5357,42 @@ globalThis.SlideLingo = (() => {
         }
       }
 
+      if (slideUsedAi) report.aiUsedSlides++;
+
       if (modifiedEntries.length) {
+        if (model && ctx) {
+          try {
+            const bd = await buildBackdrop(zip, ctx, doc, W, H, partCache);
+            if (bd) model.contrastOK = makeContrastTest(bd);
+          } catch (err) { console.error("[SL] backdrop", number, err); }
+        }
         if (model) {
           try {
             const res = solveSlideLayout(model);
             layoutLog.push({ slide: number, ...res, notes: res.notes.length });
             if (res.notes.length) notes.push(...res.notes);
             if (res.collisions.length) {
-              report.warnings.push({number,text:"Bố cục rất chật: còn "+res.collisions.length+" chỗ chữ dịch sát/chạm phần tử khác. Hãy kiểm tra slide này."});
+              report.warnings.push({ number, text: "Bố cục rất chật: còn " + res.collisions.length + " chỗ chữ dịch sát/chạm phần tử khác. Hãy kiểm tra slide này." });
             }
             const k = res.knobs || {};
-            if (k.src < 0.999) report.warnings.push({number,text:"Đã co chữ gốc còn "+Math.round(k.src*100)+"% để vừa bố cục."});
+            if (k.src < 0.999) report.warnings.push({ number, text: "Đã co chữ gốc còn " + Math.round(k.src * 100) + "% để vừa bố cục." });
           } catch (err) {
             console.error("[SL] layout solve", number, err);
-            report.warnings.push({number,text:"Chưa tự dàn lại được bố cục slide này. Hãy kiểm tra thủ công."});
+            report.warnings.push({ number, text: "Chưa tự dàn lại được bố cục slide này. Hãy kiểm tra thủ công." });
           }
         }
         if (modifiedEntries.some(e => descendants(e.tableNode || e.node, P, "cNvPr")[0])) report.visible++;
-        zip.file(path,serializer.serializeToString(doc));
+        zip.file(path, serializer.serializeToString(doc));
       }
-      if (untranslated) report.warnings.push({number,text:untranslated+" đoạn chưa có bản dịch hợp lệ. Hãy kiểm tra và bổ sung thủ công."});
+      if (untranslated) report.warnings.push({ number, text: untranslated + " đoạn chưa có bản dịch hợp lệ. Hãy kiểm tra và bổ sung thủ công." });
       if (notes.length) {
-        const written = await putNotes(zip,path,notes,lang,font);
+        const written = await putNotes(zip, path, notes, lang, font);
         if (written === "added") report.notes++;
         if (!written) report.skipped += notes.length;
         const text = written === "existing" ? "Đã có phần dịch trong ghi chú cho ngôn ngữ này."
-          : written ? notes.length+" đoạn nằm trong ghi chú vì bố cục chật hoặc có hoạt ảnh."
-          : notes.length+" đoạn chưa chèn được vì thiếu chỗ và không có ghi chú khả dụng.";
-        report.warnings.push({number,text});
+          : written ? notes.length + " đoạn nằm trong ghi chú vì bố cục chật hoặc có hoạt ảnh."
+          : notes.length + " đoạn chưa chèn được vì thiếu chỗ và không có ghi chú khả dụng.";
+        report.warnings.push({ number, text });
       }
     }
     if (!report.visible && !report.notes && !report.strippedUnsafeCount) return { bytes:null, report };
@@ -11799,10 +11886,10 @@ $("form").addEventListener("submit",async event=>{
       const totalFiles = selectedFiles.length;
       const aiSlideCache = new Map();
       const aiTranslateSlideBatch = (useAi && summaryEngine?.callLlmJson)
-        ? async ({ slideNumber, totalSlides, target: tgtCode, targetLabel, slideContextTexts, items }) => {
+        ? async ({ slideNumber, totalSlides, target: tgtCode, targetLabel, items }) => {
             const pending = [];
             const resolved = {};
-            const cacheKeyFor = it => `${tgtCode}::${it.inCard ? "C" : "W"}::${Math.round((it.charBudget || 120) / 25)}::${it.text}`;
+            const cacheKeyFor = it => `${tgtCode}::${it.inCard ? "C" : "W"}::${Math.round((it.charBudget || 120) / 30)}::${it.text}`;
             for (const it of items) {
               const cacheKey = cacheKeyFor(it);
               if (aiSlideCache.has(cacheKey)) {
@@ -11814,26 +11901,25 @@ $("form").addEventListener("submit",async event=>{
             if (!pending.length) return resolved;
 
             const sysPrompt =
-              `You are a senior ESL/Business English curriculum editor, bilingual slide typesetter, and translator. ` +
-              `Return STRICTLY valid JSON matching {"items":[{"id":"...","keepEnglish":false,"mode":"inline|newline|paren","translation":"..."}]}.`;
+              `ESL/Business English slide translator. Return strictly valid JSON: ` +
+              `{"items":[{"id":"...","keepEnglish":false,"mode":"inline|newline|paren","translation":"..."}]}`;
             const usrPrompt = [
-              `Target language: ${targetLabel} (code: ${tgtCode}). Slide ${slideNumber}/${totalSlides}.`,
+              `Target: ${targetLabel} (${tgtCode}). Batch ${slideNumber}/${totalSlides}.`,
               `Rules:`,
-              `1. keepEnglish: set true ONLY for student dialogues (A: / B: / speaker turns), fill-in-the-blank prompts (e.g. 1____), multiple-choice options (a. / b. / c.), IPA phonetics, standalone vocab flashcards, or pure English example sentences that must stay monolingual English in ESL lessons. NEVER set keepEnglish=true for slide headings (e.g. CONVERSATION, PAIR WORK, Key expressions), lead-in labels (e.g. Your plans are to:), role-play task prompts inside Student A/B cards, learning objectives, grammar notes, or student directions.`,
-              `2. translation: natural, accurate ${targetLabel} fit to slide geometry. Respect charBudget — when inCard=true or charBudget is tight, phrase concisely so translated lines do not overflow narrow cards (boxWidthPt x boxHeightPt).`,
-              `3. mode: pick "paren" for short headings/buttons/badges (renders "(translation)" inline), "inline" for medium lines that fit on the same line, or "newline" for sentences, bullet items, and tight card content so translation stacks cleanly below source text.`,
-              `4. Keep quoted English patterns ("..." / “...”) verbatim while translating [placeholders] inside them; keep IPA /.../ verbatim.`,
-              `5. Plain text only — zero HTML, XML, markdown, scripts, or formula prefixes.`,
-              `Slide full context:\n${(slideContextTexts || []).map(l => `- ${l}`).join("\n")}`,
-              `Items to process (with OpenXML box geometry):\n${JSON.stringify(pending.map(p => ({ id: p.id, isInstruction: p.isInstruction, needsAiTriage: Boolean(p.needsAiTriage), inCard: Boolean(p.inCard), boxWidthPt: p.boxWidthPt, boxHeightPt: p.boxHeightPt, fontSizePt: p.fontSizePt, charBudget: p.charBudget, defaultMode: p.mode, text: p.text })))}`,
-            ].join("\n\n");
+              `1. keepEnglish=true ONLY for dialogues (A:/B:), blanks (1____), MCQ options (a./b./c.), IPA /.../, vocab words, or pure English example sentences. NEVER keepEnglish=true for headings (CONVERSATION, PAIR WORK, Key expressions), lead-ins (Your plans are to:), Student A/B role-play prompts, objectives, or directions.`,
+              `2. translation: natural & concise ${targetLabel}, strictly <= maxCh chars when card=true so narrow cards never overflow.`,
+              `3. mode: "paren" (short heading/button), "inline" (fits same line), or "newline" (sentences, bullets, tight cards).`,
+              `4. Preserve "..." English patterns (translate [placeholders]) and IPA /.../. Plain text only.`,
+              `Items: ${JSON.stringify(pending.map(p => ({ id: p.id, text: p.text, card: Boolean(p.inCard), maxCh: p.charBudget, mode: p.mode })))}`,
+            ].join("\n");
 
+            const maxTokens = Math.min(4096, Math.max(600, pending.length * 95));
             const resp = await summaryEngine.callLlmJson(
               aiConfig,
               sysPrompt,
               usrPrompt,
               null,
-              { maxTokens: 4096, temperature: 0.15, timeoutMs: 45000 }
+              { maxTokens, temperature: 0.15, timeoutMs: 45000 }
             );
             aiValidatedOnce = true;
             const list = Array.isArray(resp?.items) ? resp.items : Array.isArray(resp?.results) ? resp.results : [];

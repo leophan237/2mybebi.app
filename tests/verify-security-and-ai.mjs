@@ -946,4 +946,79 @@ await test("Slide 2 (Exercise 1 + Top Bar + Dialogues A/B): giữ nguyên Unit 2
   assert.ok(promptY >= emu(48), `PromptBox (anchor="ctr", y=${promptY / PT}pt) phải nằm bên dưới Top Bar (46pt), tuyệt đối không đè ngược lên trên`);
 });
 
+async function makeMultiSlidePptx(slideXmls) {
+  const z = new slEnv.JSZip();
+  z.file("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/></Types>');
+  const sldIds = slideXmls.map((_, i) => `<p:sldId id="${256 + i}" r:id="rId${i + 1}"/>`).join("");
+  const rels = slideXmls.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i + 1}.xml"/>`).join("");
+  z.file("ppt/presentation.xml", `<?xml version="1.0" encoding="UTF-8"?><p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:sldIdLst>${sldIds}</p:sldIdLst><p:sldSz cx="12192000" cy="6858000"/></p:presentation>`);
+  z.file("ppt/_rels/presentation.xml.rels", `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels}</Relationships>`);
+  slideXmls.forEach((xml, i) => {
+    z.file(`ppt/slides/slide${i + 1}.xml`, xml);
+    z.file(`ppt/slides/_rels/slide${i + 1}.xml.rels`, '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>');
+  });
+  const u8 = await z.generateAsync({ type: "uint8array" });
+  return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+}
+
+await test("Deck-Level Batching & Khử trùng lặp (5 slide): chỉ gọi AI 1 lần duy nhất, giữ keepEnglish không rơi xuống translateFn", async () => {
+  const mkSlide = (idx, extraPrompt) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="SharedInst"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(50)}"/><a:ext cx="${emu(780)}" cy="${emu(40)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600"/><a:t>Work with your partner and compare answers.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="SlideBadge_${idx}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(110)}"/><a:ext cx="${emu(500)}" cy="${emu(34)}"/></a:xfrm><a:solidFill><a:srgbClr val="E8EEF5"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1500"/><a:t>${extraPrompt}</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const slides = [
+    mkSlide(1, "Client Meeting Agenda"),
+    mkSlide(2, "Quarterly Sales Review"),
+    mkSlide(3, "Supplier Negotiation Tips"),
+    mkSlide(4, "Project Milestone Signoff"),
+    mkSlide(5, "Sample Email Phrase"),
+  ];
+  const buf = await makeMultiSlidePptx(slides);
+  let aiCallCount = 0;
+  let sentItems = [];
+  let fallbackCalls = 0;
+
+  const out = await SlideLingo.convert(
+    buf,
+    "vi",
+    async text => { fallbackCalls++; return `[FB] ${text}`; },
+    () => {},
+    {
+      aiTranslateSlideBatch: async ({ items }) => {
+        aiCallCount++;
+        sentItems = items;
+        const map = {};
+        for (const it of items) {
+          if (it.text === "Sample Email Phrase") {
+            map[it.id] = { keepEnglish: true, mode: "inline", translation: "" };
+          } else {
+            map[it.id] = { keepEnglish: false, mode: "inline", translation: `Dịch: ${it.text}` };
+          }
+        }
+        return map;
+      },
+    }
+  );
+
+  assert.ok(out.bytes, "Deck 5 slide phải xuất ra PPTX hợp lệ");
+  assert.equal(aiCallCount, 1, `Kỳ vọng gom toàn bộ 5 slide vào 1 lần gọi AI, thực tế: ${aiCallCount}`);
+  const sharedMatches = sentItems.filter(it => it.text === "Work with your partner and compare answers.");
+  assert.equal(sharedMatches.length, 1, "Câu lặp lại ở cả 5 slide phải được khử trùng lặp chỉ gửi 1 lần cho AI");
+  assert.equal(fallbackCalls, 0, "Khi AI xử lý xong hoặc trả keepEnglish=true, tuyệt đối không gọi thêm translateFn dự phòng");
+  assert.equal(out.report.aiUsedSlides, 5, "Cả 5 slide đều phải được áp dụng kết quả từ AI");
+});
+
 console.log(`\nHoàn tất: ${passed}/${passed} bài kiểm thử đã PASS!\n`);
