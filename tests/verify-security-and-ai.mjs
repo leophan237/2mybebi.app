@@ -1173,4 +1173,132 @@ await test("Key expressions (3x2 Table + 6 overlaid phrase boxes): dịch tiêu 
   assert.ok(scaledSizes.some(sz => sz < 1400), `CellBoxR0C1 phải tự co font size nhỏ hơn 14pt để vừa ô: [${scaledSizes.join(",")}]`);
 });
 
+await test("Extra questions True/False (5 pill-box <p:pic>) + CONVERSATION/PAIR WORK/Key expressions: dịch đủ, không tách khung & không đè Scenario", async () => {
+  const PT = 12700;
+
+  const slide1 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld><p:spTree>
+    <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+    <p:sp><p:nvSpPr><p:cNvPr id="2" name="ConvLbl"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(95)}" y="${emu(40)}"/><a:ext cx="${emu(220)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+      <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800" b="1"/><a:t>CONVERSATION</a:t></a:r></a:p></p:txBody>
+    </p:sp>
+    <p:sp><p:nvSpPr><p:cNvPr id="3" name="PairLbl"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(105)}" y="${emu(72)}"/><a:ext cx="${emu(200)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+      <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800" b="1"/><a:t>PAIR WORK</a:t></a:r></a:p></p:txBody>
+    </p:sp>
+    <p:sp><p:nvSpPr><p:cNvPr id="4" name="ScenarioBox"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(106)}"/><a:ext cx="${emu(860)}" cy="${emu(75)}"/></a:xfrm><a:noFill/></p:spPr>
+      <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400" b="1"/><a:t>Scenario: Enhancing team collaboration</a:t></a:r></a:p></p:txBody>
+    </p:sp>
+    <p:sp><p:nvSpPr><p:cNvPr id="5" name="KeyExprBtn"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(690)}" y="${emu(480)}"/><a:ext cx="${emu(140)}" cy="${emu(30)}"/></a:xfrm><a:solidFill><a:srgbClr val="65A30D"/></a:solidFill></p:spPr>
+      <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1300" b="1"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr><a:t>Key expressions</a:t></a:r></a:p></p:txBody>
+    </p:sp>
+  </p:spTree></p:cSld>
+</p:sld>`;
+
+  const tfStatements = [
+    "Carmen is going to organize the next meeting to discuss the new hierarchy.",
+    "The new hierarchy might not affect any employees.",
+    "Carmen will inform Kirsten about any updates regarding the changes.",
+    "The company is going to move to a new office before June ends.",
+    "Kirsten should attend the next meeting because it will be about salaries.",
+  ];
+  const pillYs = [132, 212, 292, 372, 452];
+  const pillXml = tfStatements.map((stmt, idx) => `
+    <p:pic>
+      <p:nvPicPr><p:cNvPr id="${20 + idx * 2}" name="PillPic${idx}"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr>
+      <p:blipFill><a:blip r:embed="rId2"/></p:blipFill>
+      <p:spPr><a:xfrm><a:off x="${emu(120)}" y="${emu(pillYs[idx])}"/><a:ext cx="${emu(560)}" cy="${emu(40)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
+    </p:pic>
+    <p:sp>
+      <p:nvSpPr><p:cNvPr id="${21 + idx * 2}" name="TfStmt${idx}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(128)}" y="${emu(pillYs[idx] + 4)}"/><a:ext cx="${emu(544)}" cy="${emu(32)}"/></a:xfrm><a:noFill/></p:spPr>
+      <p:txBody><a:bodyPr wrap="square"/><a:p><a:r><a:rPr sz="1400"/><a:t>${stmt}</a:t></a:r></a:p></p:txBody>
+    </p:sp>`).join("\n");
+
+  const slide2 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld><p:spTree>
+    <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+    <p:sp><p:nvSpPr><p:cNvPr id="2" name="InstrTF"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(46)}"/><a:ext cx="${emu(760)}" cy="${emu(36)}"/></a:xfrm><a:noFill/></p:spPr>
+      <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"/><a:t>Read the email carefully and decide whether the following statements are True or False.</a:t></a:r></a:p></p:txBody>
+    </p:sp>
+    <p:sp><p:nvSpPr><p:cNvPr id="3" name="TFHdr"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(690)}" y="${emu(92)}"/><a:ext cx="${emu(180)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+      <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1500" b="1"/><a:t>True     False</a:t></a:r></a:p></p:txBody>
+    </p:sp>
+    ${pillXml}
+    <p:sp><p:nvSpPr><p:cNvPr id="99" name="FooterBar"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+      <p:spPr><a:xfrm><a:off x="${emu(50)}" y="${emu(528)}"/><a:ext cx="${emu(910)}" cy="${emu(12)}"/></a:xfrm><a:solidFill><a:srgbClr val="1F2937"/></a:solidFill></p:spPr>
+      <p:txBody><a:bodyPr/><a:p><a:endParaRPr/></p:txBody>
+    </p:sp>
+  </p:spTree></p:cSld>
+</p:sld>`;
+
+  const mockAiBatch = async (items) => {
+    const map = {};
+    for (const it of items) {
+      // Mô phỏng AI gợi ý sai keepEnglish=true cho câu True/False và newline cho CONVERSATION/PAIR WORK
+      const isTfStmt = /Carmen|hierarchy|company|Kirsten/i.test(it.text);
+      map[it.id] = {
+        keepEnglish: isTfStmt ? true : false,
+        mode: /^(?:CONVERSATION|PAIR WORK|Key expressions|True\s+False)$/i.test(it.text) ? "newline" : "inline",
+        translation: `VN:${it.text}`,
+      };
+    }
+    return map;
+  };
+
+  const out1 = await SlideLingo.convert(await makeSingleSlidePptx(slide1), "vi", async text => `VN:${text}`, () => {}, {
+    aiTranslateSlideBatch: mockAiBatch,
+  });
+  const out2 = await SlideLingo.convert(await makeSingleSlidePptx(slide2), "vi", async text => `VN:${text}`, () => {}, {
+    aiTranslateSlideBatch: mockAiBatch,
+  });
+
+  const outZip1 = await JSZip.loadAsync(out1.bytes);
+  const outZip2 = await JSZip.loadAsync(out2.bytes);
+  const res1 = await outZip1.file("ppt/slides/slide1.xml").async("string");
+  const res2 = await outZip2.file("ppt/slides/slide1.xml").async("string");
+
+  const P = "http://schemas.openxmlformats.org/presentationml/2006/main";
+  const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const doc1 = new slEnv.DOMParser().parseFromString(res1, "application/xml");
+  const sp1 = Array.from(doc1.getElementsByTagNameNS(P, "sp"));
+  const textOfSp = name => sp1.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === name)?.textContent || "";
+  const paraCountOfSp = name => sp1.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === name)?.getElementsByTagNameNS(A, "p").length || 0;
+  assert.ok(/\(.+\)/.test(textOfSp("ConvLbl")) && paraCountOfSp("ConvLbl") === 1, `CONVERSATION phải dịch inline trong ngoặc: ${textOfSp("ConvLbl")}`);
+  assert.ok(/\(.+\)/.test(textOfSp("PairLbl")) && paraCountOfSp("PairLbl") === 1, `PAIR WORK phải dịch inline trong ngoặc: ${textOfSp("PairLbl")}`);
+  assert.ok(/\(.+\)/.test(textOfSp("KeyExprBtn")) && paraCountOfSp("KeyExprBtn") === 1, `Nút Key expressions phải được dịch inline trong ngoặc: ${textOfSp("KeyExprBtn")}`);
+  const getRect = el => ({
+    y: Number(el.getElementsByTagNameNS(A, "off")[0].getAttribute("y")) / PT,
+    h: Number(el.getElementsByTagNameNS(A, "ext")[0].getAttribute("cy")) / PT,
+  });
+  const pairRect = getRect(sp1.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === "PairLbl"));
+  const scenRect = getRect(sp1.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === "ScenarioBox"));
+  assert.ok(pairRect.y + pairRect.h <= scenRect.y + 1, `PAIR WORK (bottom=${(pairRect.y + pairRect.h).toFixed(1)}) không được đè lên Scenario (top=${scenRect.y.toFixed(1)})`);
+
+  // Kiểm tra 5 câu True/False ở Slide 2: tất cả phải được dịch & nằm lọt bên trong khung pill-box <p:pic>
+  for (let idx = 0; idx < tfStatements.length; idx++) {
+    assert.ok(res2.includes(`VN:${tfStatements[idx]}`), `Câu True/False #${idx + 1} bắt buộc phải được dịch`);
+  }
+  assert.ok(res2.includes("(VN:True     False)") || res2.includes("(VN:True False)"), "Nhãn True/False phải ghép inline cùng hàng");
+
+  const doc2 = new slEnv.DOMParser().parseFromString(res2, "application/xml");
+  const sp2 = Array.from(doc2.getElementsByTagNameNS(P, "sp"));
+  const pic2 = Array.from(doc2.getElementsByTagNameNS(P, "pic"));
+  for (let idx = 0; idx < tfStatements.length; idx++) {
+    const picEl = pic2.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === `PillPic${idx}`);
+    const spEl = sp2.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === `TfStmt${idx}`);
+    const pr = getRect(picEl);
+    const sr = getRect(spEl);
+    assert.ok(sr.y >= pr.y - 1 && sr.y + sr.h <= pr.y + pr.h + 1,
+      `TfStmt${idx} [${sr.y.toFixed(1)}..${(sr.y + sr.h).toFixed(1)}] phải nằm gọn trong PillPic${idx} [${pr.y.toFixed(1)}..${(pr.y + pr.h).toFixed(1)}], không tách khỏi khung hay đè footer`);
+  }
+});
+
 console.log(`\nHoàn tất: ${passed}/${passed} bài kiểm thử đã PASS!\n`);
