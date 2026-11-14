@@ -2185,9 +2185,9 @@ globalThis.SlideLingo = (() => {
     return children(body, A, "p").map(paraText).filter(Boolean);
   }
 
-  const heading = /^(?:\d+[.)]\s*)?(?:(?:unit|lesson|chapter)\s*\d+\b|vocabulary\b|pronunciation\b|grammar\b|objectives?\b|practice\b|warm[- ]?up\b|wrap[- ]?up\b|summary\b|assignment\b|extra practice\b|reflection\b|self[- ]reflection\b|learning goals?\b|fun facts?\b|role[- ]play\b|before project\b|during project\b|after project\b|thank(?:s| you)\b)/i;
+  const heading = /^(?:\d+[.)]\s*)?(?:(?:unit|lesson|chapter)\s*\d+\b|vocabulary\b|pronunciation\b|grammar\b|objectives?\b|practice\b|warm[- ]?up\b|wrap[- ]?up\b|summary\b|assignment\b|extra practice\b|reflection\b|self[- ]reflection\b|learning goals?\b|fun facts?\b|role[- ]?play\b|before project\b|during project\b|after project\b|thank(?:s| you)\b|conversation\b|pair\s*work\b|group\s*work\b|individual\s*work\b|key\s*expressions?\b|useful\s*(?:expressions?|phrases?|language)\b|creative\s*speaking(?:\s*practice)?\b|speaking(?:\s*practice)?\b|listening(?:\s*practice)?\b|reading(?:\s*practice)?\b|writing(?:\s*practice)?\b|communication\b|discussion\b|scenario\b|situation\b|exercise\s*\d*\b|activity\s*\d*\b|task\s*\d*\b|language\s*(?:focus|notes?)\b)/i;
   const directions = /^(?:activity\s*\d+\s*[:.]\s*|(?:instructions?|directions|task|step)\s*\d*\s*[:.]\s*)?(?:read|reading|listen|watch|look|choose|match|complete|fill|order|reorder|arrange|work|use|put|make|making|give|create|form|build|take|change|turn|switch|swap|rewrite|unscramble|categorize|classify|sort|brainstorm|describe|introduce|explain|identify|name|list|tell|discuss|say|ask|answer|write|mark|circle|underline|repeat|practice|practise|role[- ]play|check|decide|find|select|compare|reflect|think about|talk|guess|label|share|present|prepare|imagine|suppose|pretend)\b/i;
-  const explicit = /^(?:instructions?|directions|scenario|situation|context|learning objectives?|your task|homework|assignment|in today[’']s lesson|in this (?:conversation|dialogue|lesson|activity|exercise|part|section|unit|table|chart)|today you will|by the end|(?:then\s+)?let[’']s|you (?:should|can|will|need to|must)\b|make sure you can\b|are there any (?:words|questions)|do you have any questions|below is the list|origin of the word|follow(?:ing)? the pattern|use the pattern|each (?:student|pair|group|team|person|partner)|student [ab12]\b|one student\b|partner [ab12]\b|the (?:interviewer|interviewee|speaker|listener|caller|receiver|student|partner)\s+(?:asks?|answers?|writes?|reads?|says?|listens?|takes?|chooses?|checks?)\b|then\s+(?:swap|switch|change|share|present|ask|answer)|we use\b|it (?:gives|shows|means|helps|expresses|describes|is used)\b)/i;
+  const explicit = /^(?:instructions?|directions|scenario|situation|context|learning objectives?|your (?:task|role|plans?|goal|aim|job)\b|you are\b|work (?:in|with)\b|in (?:pairs?|groups?)\b|pair\s*work\b|group\s*work\b|key\s*expressions?\b|useful\s*(?:expressions?|phrases?|language)\b|homework|assignment|in today[’']s lesson|in this (?:conversation|dialogue|lesson|activity|exercise|part|section|unit|table|chart)|today you will|by the end|(?:then\s+)?let[’']s|you (?:should|can|will|need to|must)\b|make sure (?:you )?(?:can|to)?\b|remember to\b|don[’']t forget to\b|be ready to\b|prepare to\b|are there any (?:words|questions)|do you have any questions|below is the list|origin of the word|follow(?:ing)? the pattern|use the pattern|each (?:student|pair|group|team|person|partner)|student [ab12]\b|one student\b|partner [ab12]\b|the (?:interviewer|interviewee|speaker|listener|caller|receiver|student|partner)\s+(?:asks?|answers?|writes?|reads?|says?|listens?|takes?|chooses?|checks?)\b|then\s+(?:swap|switch|change|share|present|ask|answer)|we use\b|it (?:gives|shows|means|helps|expresses|describes|is used)\b)/i;
   const teacher = /^(?:teacher\b|notes?\s*:|answer key\b|possible answer\b|transcript\b|script\b)/i;
   const examplePrefix = /^(?:examples?|sample\s+answers?|models?|e\.g\.)\s*[:.]\s*/i;
   const answer = /^(?:[A-Z]\s*:|(?:correct answers?|answers?)\s*:|\d+[.)]\s+_{2,})|_{2,}|^(?!pronunciation\b|rule\b|sound\b).*\/(?:[^/]*[ˈˌəɪʃʊɔŋæɑɜɒʌθðʒʤʧ][^/]*)\//i;
@@ -2227,6 +2227,12 @@ globalThis.SlideLingo = (() => {
       "question chain": "質問チェーン", "asking questions": "質問する", "intonation & stress": "イントネーションと強勢",
       "summary": "まとめ", "assignment": "課題", "homework": "宿題", "role-play": "ロールプレイ", "role play": "ロールプレイ",
       "unit 2: company": "会社", "company": "会社",
+      "conversation": "会話", "pair work": "ペアワーク", "group work": "グループワーク",
+      "key expressions": "重要表現", "useful expressions": "役立つ表現",
+      "creative speaking practice": "応用スピーキング練習", "speaking practice": "スピーキング練習",
+      "scenario": "シナリオ", "situation": "状況",
+      "student a": "学生A", "student b": "学生B", "partner a": "パートナーA", "partner b": "パートナーB",
+      "your plans are to:": "計画：", "your plans are to": "計画",
     },
     vi: {
       "warm-up": "Khởi động", "warm up": "Khởi động", "wrap-up": "Tổng kết", "wrap-up & assignment": "Tổng kết & Bài tập", "extra practice": "Luyện tập thêm",
@@ -2249,6 +2255,12 @@ globalThis.SlideLingo = (() => {
       "question chain": "Chuỗi câu hỏi", "asking questions": "Đặt câu hỏi", "intonation & stress": "Ngữ điệu & Trọng âm",
       "summary": "Tóm tắt", "assignment": "Bài tập", "homework": "Bài tập về nhà", "role-play": "Đóng vai", "role play": "Đóng vai",
       "unit 2: company": "Công ty", "company": "Công ty",
+      "conversation": "Hội thoại", "pair work": "Làm việc theo cặp", "group work": "Làm việc theo nhóm",
+      "key expressions": "Mẫu câu trọng tâm", "useful expressions": "Mẫu câu hữu ích",
+      "creative speaking practice": "Thực hành nói sáng tạo", "speaking practice": "Thực hành nói",
+      "scenario": "Tình huống", "situation": "Bối cảnh",
+      "student a": "Học viên A", "student b": "Học viên B", "partner a": "Bạn cặp A", "partner b": "Bạn cặp B",
+      "your plans are to:": "Kế hoạch của bạn là:", "your plans are to": "Kế hoạch của bạn là",
     },
   };
 
@@ -2354,10 +2366,10 @@ globalThis.SlideLingo = (() => {
     const phType = descendants(node, P, "ph")[0]?.getAttribute("type");
     if (["sldNum", "ftr", "dt", "hdr"].includes(phType)) return true;
     if (brandChromeRe.test(full)) return true;
-    const isTopBar = !rect || (rect.y < H * 0.12 && rect.h < H * 0.11);
+    const isTopBar = !rect || (rect.y < H * 0.105 && rect.y + rect.h <= H * 0.135);
     if (isTopBar && paragraphs.length <= 2 && breadcrumbRe.test(full)) return true;
-    if (rect && rect.y < H * 0.088 && rect.h < H * 0.095) {
-      if (/^(?:unit|lesson|exercise|vocabulary|grammar|warm[- ]?up|wrap[- ]?up|practice|part|section|review|recap|extra\s+practice|fun\s+facts?)\b/i.test(full) && !/[.?!]$/.test(full)) return true;
+    if (rect && rect.y < H * 0.075 && rect.y + rect.h <= H * 0.12) {
+      if (/^(?:unit|lesson|module|chapter|exercise|vocabulary|grammar(?:\s+recap)?|business\s+communication|creative\s+speaking(?:\s+practice)?|warm[- ]?up|wrap[- ]?up|practice|part|section|review|recap|extra\s+practice|fun\s+facts?)\b/i.test(full) && !/[.?!]$/.test(full)) return true;
       if (rect.x > W * 0.82 && full.length <= 20) return true;
     }
     return false;
@@ -2383,9 +2395,20 @@ globalThis.SlideLingo = (() => {
       });
       if (nearPic) return true;
     }
-    const runs = descendants(child(node, P, "txBody"), A, "rPr");
-    const large = runs.some(r => Number(r.getAttribute("sz")) >= 2700);
-    if (!large && !isGlossaryHeading(text) && words.length <= 3) return true;
+    if (/^(?:[a-d]|[1-9]\d?)[.)]\s/i.test(text) || /^\/[^/]+\/$/.test(text)) return true;
+    return false;
+  }
+
+  function isMonolingualDialogueOrDrill(text, paragraphs) {
+    const t = String(text || "").trim();
+    if (!t) return true;
+    if (/^(?:[A-F]|Speaker\s*\d+|Person\s*[AB12]|Man|Woman|Interviewer|Interviewee)\s*:\s*\S/i.test(t)) return true;
+    if (/^["“'‘].+["”'’][.?!]?$/.test(t) && !directions.test(t) && !explicit.test(t)) return true;
+    if (/\b\d*\s*_{3,}/.test(t) || /\[\s*_{2,}\s*\]|\(\s*_{2,}\s*\)/.test(t)) return true;
+    if (/^[a-d][.)]\s+\S+(?:\s+[b-d][.)]\s+\S+)+/i.test(t)) return true;
+    if (Array.isArray(paragraphs) && paragraphs.some(p => /^(?:[A-F])\s*:\s*\S/.test(String(p || "").trim()))) {
+      if (/^(?:[a-d][.)]\s+\S+|_+)/.test(t)) return true;
+    }
     return false;
   }
 
@@ -2522,18 +2545,25 @@ globalThis.SlideLingo = (() => {
     }
 
     // 6. Câu giải thích phụ (pIndex >= 1) nằm ngay trong cùng hộp văn bản hướng dẫn đã có câu lệnh mở đầu
-    if (pIndex >= 1 && hasPrimaryInstruction && !/^\d+[.)]\s|^[A-D][.)]\s/.test(text) && (/[.?!,;]$/.test(text) || text.split(/\s+/).length >= 5)) {
+    if (pIndex >= 1 && hasPrimaryInstruction && !isMonolingualDialogueOrDrill(text) && !/^\d+[.)]\s|^[A-D][.)]\s/.test(text) && (/[.?!,;:]$/.test(text) || text.split(/\s+/).length >= 4)) {
       return { mode: "INLINE_APPEND", sourceText: text, hasPattern: hasProtectedPattern(text) };
     }
 
     return null;
   }
 
-  function collectTableEntries(gfNode, rect, ids, baseContext) {
+  function collectTableEntries(gfNode, rect, ids, baseContext, W, H) {
     const tbl = descendants(gfNode, A, "tbl")[0];
     if (!tbl) return [];
     const trs = children(tbl, A, "tr");
     if (!trs.length) return [];
+    const isTopBarTable = rect && H && rect.y < H * 0.095 && rect.y + rect.h <= H * 0.135 && trs.length <= 1;
+    if (isTopBarTable) {
+      const tblText = descendants(tbl, A, "t").map(n => n.textContent || "").join(" ").trim();
+      if (breadcrumbRe.test(tblText) || /^(?:unit|lesson|module|chapter|exercise|vocabulary|grammar|business|creative)\b/i.test(tblText)) {
+        return [];
+      }
+    }
 
     const cellText = tc => {
       const body = child(tc, A, "txBody");
@@ -2642,7 +2672,7 @@ globalThis.SlideLingo = (() => {
         const rect = shapeRect(node, tree) || outer;
         if (node.localName === "grpSp") { visit(node, rect, ids); continue; }
         if (node.localName === "graphicFrame") {
-          entries.push(...collectTableEntries(node, rect, ids, baseContext));
+          entries.push(...collectTableEntries(node, rect, ids, baseContext, W, H));
           continue;
         }
         if (node.localName !== "sp") continue;
@@ -2712,7 +2742,18 @@ globalThis.SlideLingo = (() => {
         for (let i = 0; i < pNodes.length; i++) {
           const t = pTexts[i];
           if (!t) continue;
-          const act = classifyParagraph(t, i, nonEmpty.length, node, shapeContext, boxHasPrimaryInstruction, boxIsExampleBlock);
+          let act = classifyParagraph(t, i, nonEmpty.length, node, shapeContext, boxHasPrimaryInstruction, boxIsExampleBlock);
+          if (!act && !boxIsExampleBlock && !isMonolingualDialogueOrDrill(t, pTexts) && !hasTargetScript(t)) {
+            const wc = t.split(/\s+/).filter(Boolean).length;
+            const looksSkip = /^(?:[a-d]|[1-9]\d?)[.)]\s/i.test(t) || /^\/[^/]+\/$/.test(t) || /^\d+(?:[.,:/-]\d+)*%?$/.test(t) || /^https?:\/\//i.test(t);
+            if (!looksSkip) {
+              if (wc >= 4 || /[:.?!]$/.test(t)) {
+                act = { mode: wc <= 6 ? "NEWLINE_AFTER" : "INLINE_APPEND", sourceText: t, hasPattern: hasProtectedPattern(t), needsAiTriage: true };
+              } else if (/^[A-Z]/.test(t) && wc >= 1 && wc <= 4) {
+                act = { mode: "NEWLINE_AFTER", sourceText: t, hasPattern: hasProtectedPattern(t), needsAiTriage: true, aiOnly: true };
+              }
+            }
+          }
           if (act) {
             if (act.isExample) boxIsExampleBlock = true;
             if (act.mode === "SKIP_HEADER_ONLY") continue;
@@ -3825,12 +3866,21 @@ globalThis.SlideLingo = (() => {
       }
     }
 
-    // Phân loại chrome: vùng thanh điều hướng phía trên
+    // Phân loại chrome: vùng thanh điều hướng phía trên (gồm cả table/shape/text Top Bar)
     for (const it of items) {
       if (it.background) continue;
       const r = it.rect;
       if (r.y + r.h <= H * 0.1 && r.y < H * 0.06) it.locked = it.chrome = true;
-      if (it.kind === "text" && r.y + r.h <= H * 0.12 && /\b(?:unit|lesson)\b.*\|?/i.test(extract(it.node).join(" ")) && r.h < H * 0.1) it.locked = it.chrome = true;
+      if (r.y < H * 0.08 && r.y + r.h <= H * 0.135) {
+        const rawTxt = descendants(it.node, A, "t").map(n => n.textContent || "").join(" ").trim();
+        if (it.kind === "table" && (/\b(?:unit|lesson|module|chapter|exercise|grammar|business|creative)\b|\|/i.test(rawTxt) || descendants(it.node, A, "tr").length <= 1)) {
+          it.locked = it.chrome = true;
+        } else if (/\b(?:unit|lesson|module|chapter)\b.*\|?|\b(?:grammar\s*recap|business\s*communication|creative\s*speaking(?:\s*practice)?)\b/i.test(rawTxt) && !/[.?!]$/.test(rawTxt)) {
+          it.locked = it.chrome = true;
+        } else if ((it.kind === "shape" || (it.kind === "text" && it.filled)) && r.w >= W * 0.65 && !/[.?!]$/.test(rawTxt)) {
+          it.locked = it.chrome = true;
+        }
+      }
     }
 
     // Đo bố cục gốc của mọi khung chữ
@@ -3850,16 +3900,26 @@ globalThis.SlideLingo = (() => {
 
     const live = items.filter(it => !it.background);
 
-    // Khối chứa (container): hình nền phía sau bao trọn khung chữ
+    // Khối chứa (container): hình nền phía sau bao trọn khung chữ (kể cả thẻ group hoặc box chứa tiêu đề thẻ)
     for (const it of live) {
       if (it.kind !== "text") continue;
       const box = it.filled ? it.rect : unionRect(it.orig.lines) || it.rect;
       let best = null;
       for (const c of live) {
-        if (c === it || c.z > it.z || !(c.kind === "shape" || (c.kind === "text" && c.filled && !it.filled && c !== it))) continue;
-        if (c.kind === "text" && !c.filled) continue;
-        if (areaOf(c.rect) < areaOf(box) * 0.95) continue;
-        if (interArea(c.rect, box) < areaOf(box) * 0.85) continue;
+        if (c === it || c.z > it.z || c.chrome) continue;
+        const isGroupCard = c.kind === "group" && !descendants(c.node, A, "t").some(n => (n.textContent || "").trim());
+        const isContainerKind = c.kind === "shape" || isGroupCard || (c.kind === "text" && c.filled && !it.filled);
+        if (!isContainerKind) continue;
+        // Bỏ qua dải màu ngang phủ gần hết chiều ngang slide (trừ khi khung chữ cũng rộng tương đương)
+        if (c.rect.w >= W * 0.88 && box.w < W * 0.65) continue;
+        if (c.rect.w >= W * 0.85 && c.rect.h >= H * 0.72) continue;
+        if (c.rect.w < box.w * 0.65 || c.rect.h < box.h * 0.5) continue;
+        const inter = interArea(c.rect, box);
+        const ratio = inter / Math.max(1, areaOf(box));
+        const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+        const centerInside = cx >= c.rect.x - 4 && cx <= c.rect.x + c.rect.w + 4 && cy >= c.rect.y - 4 && cy <= c.rect.y + c.rect.h + 4;
+        if (ratio < 0.85 && !(ratio >= 0.55 && centerInside)) continue;
+        if (c.kind === "shape" && !isFilled(c.node) && areaOf(c.rect) < areaOf(box) * 0.9) continue;
         if (!best || areaOf(c.rect) < areaOf(best.rect)) best = c;
       }
       if (best) {
@@ -3868,9 +3928,35 @@ globalThis.SlideLingo = (() => {
       }
     }
 
+    // Đường viền đáy thẻ (<p:cxnSp> hoặc thanh mảnh ngang) gắn vào thẻ/khối ngay phía trên để không cắt ngang chữ khi thẻ giãn
+    for (const x of live) {
+      const isHorizLine = x.kind === "line" && x.rect.h <= 10 && x.rect.w >= 40;
+      const isThinStrip = x.kind === "shape" && !x.contents?.length && x.rect.h <= 8 && x.rect.w >= 40;
+      if (!isHorizLine && !isThinStrip) continue;
+      let host = null;
+      let bestScore = Infinity;
+      for (const h of live) {
+        if (h === x || h.chrome || h.kind === "line") continue;
+        if (h.kind === "shape" && h.rect.h <= 10) continue;
+        const ho = hOverlap(x.rect, h.rect);
+        if (ho < Math.min(x.rect.w, h.rect.w) * 0.65 || x.rect.w > h.rect.w * 1.15) continue;
+        const hb = h.rect.y + h.rect.h;
+        const diff = Math.abs(x.rect.y - hb);
+        if (diff > 12 || h.rect.h < 28) continue;
+        const pri = h.contents?.length ? 0 : (h.filled || h.kind === "group" || h.kind === "shape") ? 1 : 2;
+        const score = pri * 1e6 + diff * 1e3 + Math.abs(x.rect.w - h.rect.w);
+        if (score < bestScore) { bestScore = score; host = h; }
+      }
+      if (host) {
+        const att = { item: x, host, isBottomEdge: true, edgeOffset: x.rect.y - (host.rect.y + host.rect.h) };
+        x.attachedTo = att;
+        (host.attachments ||= []).push(att);
+      }
+    }
+
     // Phần tử đính kèm (overlay): đáp án trên chỗ trống, icon cạnh bullet, mũi tên ngữ điệu, ô đáp án trên bảng
     for (const x of live) {
-      if (x.locked || x.contents?.length) continue;
+      if (x.locked || x.contents?.length || x.attachedTo) continue;
       if (x.kind === "text" && x.filled && x.rect.w > 150) continue;
       if (x.kind === "text" && extract(x.node).join(" ").length > 24) continue;
       let host = null;
@@ -4274,7 +4360,7 @@ globalThis.SlideLingo = (() => {
       let textTop;
       const autofit = !!child(child(it.body, A, "bodyPr"), A, "spAutoFit");
       if (it.anchor === "b") textTop = it.orig.bottom - T;
-      else if (it.anchor === "ctr" && !autofit) textTop = (it.orig.top + it.orig.bottom) / 2 - T / 2;   // giữ tâm như PowerPoint
+      else if (it.anchor === "ctr" && !autofit && (!it.modified || T <= it.orig.lay.height + 1)) textTop = (it.orig.top + it.orig.bottom) / 2 - T / 2;   // giữ tâm khi không tràn lên trên
       else textTop = it.orig.top;
       textTop += it.dy;
       const insV = it.insets.t + it.insets.b;
@@ -4298,7 +4384,11 @@ globalThis.SlideLingo = (() => {
         const useBox = it.filled && !it.container;
         if (it.modified) {
           const g = it.g;
-          return { rect: useBox ? unionRect([g.rect, ...g.lines]) : (unionRect(g.lines) || g.rect), lines: useBox ? null : g.lines };
+          const baseRect = useBox ? unionRect([g.rect, ...g.lines]) : (unionRect(g.lines) || g.rect);
+          if (it.contents?.length && (it.growB || it.growT)) {
+            return { rect: unionRect([baseRect, curRect(it)]), lines: null };
+          }
+          return { rect: baseRect, lines: useBox ? null : g.lines };
         }
         const lines = it.orig.lines.map(l => ({ ...l, y: l.y + it.dy }));
         const r = useBox ? { ...it.origRect, y: it.origRect.y + it.dy } : (unionRect(lines) || { ...it.origRect, y: it.origRect.y + it.dy });
@@ -4318,10 +4408,11 @@ globalThis.SlideLingo = (() => {
         const hs = it.rowH || it.table.rows.map(row => row.h);
         return { x: r.x, y: r.y + it.dy, w: r.w, h: hs.reduce((s, v, i) => s + Math.max(v, it.table.rows[i].minH), 0) };
       }
-      if (it.kind === "group" && it.growB) return { x: r.x, y: r.y + it.dy, w: r.w, h: r.h + it.growB };
       if (it.contents?.length && (it.growB || it.growT)) {
-        return { x: r.x, y: r.y + it.dy - (it.growT || 0), w: r.w, h: r.h + (it.growB || 0) + (it.growT || 0) };
+        const baseH = it.modified && it.g ? Math.max(r.h, it.g.rect.h) : r.h;
+        return { x: r.x, y: r.y + it.dy - (it.growT || 0), w: r.w, h: baseH + (it.growB || 0) + (it.growT || 0) };
       }
+      if (it.kind === "group" && (it.growB || it.growT)) return { x: r.x, y: r.y + it.dy - (it.growT || 0), w: r.w, h: r.h + (it.growB || 0) + (it.growT || 0) };
       return { x: r.x, y: r.y + it.dy, w: r.w, h: r.h };
     }
     function origExtent(it) {
@@ -4375,25 +4466,36 @@ globalThis.SlideLingo = (() => {
       }
     }
 
-    // Hàng (row) thiết kế: các phần tử cùng mép trên & chiều cao tương đương phải di chuyển cùng nhau
+    // Hàng (row) thiết kế: các phần tử cùng mép trên & avatar + bóng thoại đi liền nhau theo hàng
     const rowGroups = [];
     {
-      const cands = solids.filter(it => isMovable(it) && (it.kind !== "text" || (!it.modified && extract(it.node).join(" ").length <= 40)));
+      const cands = solids.filter(it => isMovable(it) && !it.attachedTo && (it.kind !== "text" || !it.modified));
       const used = new Set();
       for (const a of cands) {
         if (used.has(a)) continue;
         const ea = origExtent(a).rect;
         const row = [a];
         for (const b of cands) {
-          if (b === a || used.has(b) || b.kind === "text" !== (a.kind === "text")) continue;
+          if (b === a || used.has(b)) continue;
           const eb = origExtent(b).rect;
-          if (Math.abs(ea.y - eb.y) <= 3 && Math.abs(ea.h - eb.h) <= Math.max(ea.h, eb.h) * 0.35) row.push(b);
+          const sameBand = Math.abs(ea.y - eb.y) <= 3 && Math.abs(ea.h - eb.h) <= Math.max(ea.h, eb.h) * 0.35;
+          const sameKind = (b.kind === "text") === (a.kind === "text");
+          if (sameKind && sameBand) {
+            row.push(b);
+            continue;
+          }
+          // Ghép avatar với bóng thoại chạm/kề ngang trong cùng dải dọc
+          const vOv = Math.min(ea.y + ea.h, eb.y + eb.h) - Math.max(ea.y, eb.y);
+          const hGap = Math.max(0, eb.x - (ea.x + ea.w), ea.x - (eb.x + eb.w));
+          const isPicBubblePair = ((a.kind === "pic" && b.kind !== "pic") || (b.kind === "pic" && a.kind !== "pic")) && vOv >= Math.min(ea.h, eb.h) * 0.55 && hGap <= 28;
+          if (isPicBubblePair) row.push(b);
         }
         if (row.length >= 2) { row.forEach(r => used.add(r)); rowGroups.push(row); }
       }
     }
 
     const hasCtrTitle = live.some(x => x.node && phOf(x.node)?.getAttribute("type") === "ctrTitle");
+    const topChromeFloor = Math.max(RF.margin, ...live.filter(x => x.chrome && x.rect.y < H * 0.25).map(x => x.rect.y + x.rect.h + 3));
     function limitsOf(it) {
       const e = origExtent(it).rect;
       let bottom = H - RF.margin, top = RF.margin;
@@ -4402,6 +4504,7 @@ globalThis.SlideLingo = (() => {
         if (r.y >= e.y + e.h - 2) bottom = Math.min(bottom, r.y - 2);
         else if (r.y + r.h <= e.y + 2) top = Math.max(top, r.y + r.h + 2);
       }
+      if (!it.chrome && e.y >= topChromeFloor - 2) top = Math.max(top, topChromeFloor);
       if (hasCtrTitle && it.kind === "text" && it.textColor && relLum(it.textColor) > 0.85 && e.y + e.h <= H * 0.56) {
         bottom = Math.min(bottom, H * 0.505);
         return { bottom, top: Math.min(top, e.y) };
@@ -4530,9 +4633,9 @@ globalThis.SlideLingo = (() => {
         }
         if (changed) updateContainers(); else break;
       }
-      // Nếu phần tử chữ neo đáy (anchor="b") mọc vượt trần lim.top, đẩy xuống trước khi lan truyền relsDown
+      // Nếu phần tử chữ neo đáy/tâm mọc vượt trần lim.top (Top Bar chrome), đẩy xuống trước khi lan truyền relsDown
       for (const it of solids) {
-        if (it.kind !== "text" || it.anchor !== "b" || !it.modified || !isMovable(it)) continue;
+        if (it.kind !== "text" || (it.anchor !== "b" && it.anchor !== "ctr") || !it.modified || !isMovable(it)) continue;
         const e = extentOf(it).rect;
         if (e.y < it.lim.top - 0.5) {
           shift(it, it.lim.top - e.y);
@@ -4805,7 +4908,10 @@ globalThis.SlideLingo = (() => {
       m.frame.lead = 1;
       if (m.inGroup || m.inTable) continue;
       const g = geomText(m);
-      writeRect(m.node, g.rect);
+      const outRect = m.contents?.length && (m.growB || m.growT)
+        ? { x: g.rect.x, y: Math.min(g.rect.y, m.origRect.y + m.dy - (m.growT || 0)), w: g.rect.w, h: Math.max(g.rect.h, m.origRect.h + (m.growB || 0) + (m.growT || 0)) }
+        : g.rect;
+      writeRect(m.node, outRect);
     }
     for (const it of live) {
       if (it.modified && it.kind === "text") continue;
@@ -4817,12 +4923,12 @@ globalThis.SlideLingo = (() => {
         const effRows = it.rowH || it.table.rows.map(r => Math.max(r.h, r.minH));
         it.table.rows.forEach((r, i) => r.tr.setAttribute("h", String(Math.round(effRows[i] * PT))));
       }
-      if (it.kind === "group" && (it.growB || hasGroupWiden)) applyGroupGrowth(it, it.growB || 0);
+      if (it.kind === "group" && (it.growB || it.growT || hasGroupWiden)) applyGroupGrowth(it, (it.growB || 0) + (it.growT || 0));
       const r = curRect(it);
       if (it.kind === "group") {
         const x = getXfrmEl(it.node);
         const off = child(x, A, "off");
-        if (off) off.setAttribute("y", String(Math.round((it.origRect.y + it.dy) * PT)));
+        if (off) off.setAttribute("y", String(Math.round((it.origRect.y + it.dy - (it.growT || 0)) * PT)));
         continue;
       }
       writeRect(it.node, r);
@@ -4836,7 +4942,12 @@ globalThis.SlideLingo = (() => {
       let ny = x.origRect.y + (h.dy || 0);
       let nx = x.origRect.x;
       let nw = x.origRect.w, nh = x.origRect.h;
-      if (h.kind === "text" && att.line) {
+      if (att.isBottomEdge) {
+        const hr = h.kind === "text" && h.modified && h.g && !(h.contents?.length && (h.growB || h.growT))
+          ? h.g.rect
+          : curRect(h);
+        ny = hr.y + hr.h + att.edgeOffset;
+      } else if (h.kind === "text" && att.line) {
         if (h.modified && h.g) {
           const p = h.g.lay.paras.find(pp => pp.pNode === att.line.pNode);
           const l = p?.lines[Math.min(att.line.idx, p.lines.length - 1)];
@@ -5021,14 +5132,38 @@ globalThis.SlideLingo = (() => {
       const notes = [];
       const modifiedEntries = [];
 
-      // AI xử lý ngữ cảnh toàn slide trước khi chèn OpenXML (khi bật AI)
+      // Mô hình bố cục được dựng TRƯỚC khi gọi AI và trước khi chèn để cấp thông số kích thước hộp/thẻ cho AI và giữ hình học gốc làm chuẩn
+      let model = null;
+      try {
+        const ctx = await loadSlideContext(zip, path, presentation, partCache);
+        model = buildLayoutModel(ctx, doc, tree, W, H);
+        try {
+          const bd = await buildBackdrop(zip, ctx, doc, W, H, partCache);
+          if (bd) model.contrastOK = makeContrastTest(bd);
+        } catch (err) { console.error("[SL] backdrop", number, err); }
+        for (const it of model.textByNode.values()) it.textColor = textColorOf(ctx, it);
+      } catch (err) {
+        console.error("[SL] layout model", number, err);
+      }
+
+      // AI xử lý ngữ cảnh & kích thước từng khung trước khi chèn OpenXML (khi bật AI)
       const aiResultsByAction = new WeakMap();
       if (aiBatchFn) {
         const batchItems = [];
         const itemActionRef = new Map();
+        const cjkTarget = target === "ja" || target === "zh" || target === "ko";
         for (const entry of source) {
           const isAnimated = entry.ids.some(spId => targets.has(spId));
           if (isAnimated && entry.text.length < 30 && !directions.test(entry.text)) continue;
+          const item = model?.textByNode.get(entry.node);
+          const boxWidthPt = Math.round(item?.rect?.w || entry.rect?.w || 420);
+          const boxHeightPt = Math.round(item?.rect?.h || entry.rect?.h || 60);
+          const rPrs = descendants(entry.body, A, "rPr");
+          const fontSizePt = rPrs.length ? Math.max(8, Math.min(72, Math.round((rPrs.reduce((s, r) => s + (Number(r.getAttribute("sz")) || 1600), 0) / rPrs.length) / 100))) : 16;
+          const inCard = Boolean(item?.container || (item?.filled && boxHeightPt >= 85 && boxWidthPt <= W * 0.65));
+          const charsPerLine = Math.max(12, Math.floor((boxWidthPt - 18) / (fontSizePt * (cjkTarget ? 1.02 : 0.54))));
+          const rowBudget = Math.max(20, Math.round(charsPerLine * (inCard ? (entry.actions.length >= 3 ? 1.5 : 2.1) : 2.5)));
+          const charBudget = inCard ? Math.min(200, rowBudget) : Math.max(28, rowBudget);
           for (const action of entry.actions) {
             const glossKey = normalizeGlossaryKey(action.sourceText);
             if (GLOSSARY[target]?.[glossKey]) continue;
@@ -5040,6 +5175,12 @@ globalThis.SlideLingo = (() => {
               text: action.sourceText,
               mode: action.mode,
               isInstruction: directions.test(action.sourceText) || explicit.test(action.sourceText) || isGlossaryHeading(action.sourceText),
+              boxWidthPt,
+              boxHeightPt,
+              fontSizePt,
+              inCard,
+              charBudget,
+              needsAiTriage: Boolean(action.needsAiTriage),
             });
             itemActionRef.set(itemId, action);
           }
@@ -5071,20 +5212,6 @@ globalThis.SlideLingo = (() => {
         }
       }
 
-      // Mô hình bố cục được dựng TRƯỚC khi chèn để giữ hình học gốc làm chuẩn
-      let model = null;
-      try {
-        const ctx = await loadSlideContext(zip, path, presentation, partCache);
-        model = buildLayoutModel(ctx, doc, tree, W, H);
-        try {
-          const bd = await buildBackdrop(zip, ctx, doc, W, H, partCache);
-          if (bd) model.contrastOK = makeContrastTest(bd);
-        } catch (err) { console.error("[SL] backdrop", number, err); }
-        for (const it of model.textByNode.values()) it.textColor = textColorOf(ctx, it);
-      } catch (err) {
-        console.error("[SL] layout model", number, err);
-      }
-
       for (const entry of source) {
         const isAnimated = entry.ids.some(id=>targets.has(id));
         if (isAnimated && entry.text.length < 30 && !directions.test(entry.text)) continue;
@@ -5093,7 +5220,9 @@ globalThis.SlideLingo = (() => {
         const item = model?.textByNode.get(entry.node);
         for (const action of entry.actions) {
           let value = null;
+          let effectiveAction = action;
           const aiItem = aiResultsByAction.get(action);
+          if (action.aiOnly && !aiItem) continue;
           if (aiItem) {
             const mandatoryKeepTranslating =
               directions.test(action.sourceText) ||
@@ -5102,6 +5231,11 @@ globalThis.SlideLingo = (() => {
               /^lesson\s*\d+/i.test(action.sourceText);
             if (aiItem.keepEnglish === true && !mandatoryKeepTranslating) {
               continue;
+            }
+            if (aiItem.mode && (action.mode === "INLINE_APPEND" || action.mode === "NEWLINE_AFTER")) {
+              if (aiItem.mode === "paren") effectiveAction = { ...action, mode: "INLINE_APPEND", paren: true, forceNewline: false };
+              else if (aiItem.mode === "inline") effectiveAction = { ...action, mode: "INLINE_APPEND", paren: false, forceNewline: false };
+              else if (aiItem.mode === "newline") effectiveAction = { ...action, mode: "NEWLINE_AFTER", paren: false };
             }
             if (typeof aiItem.translation === "string" && aiItem.translation.trim()) {
               const sanitizedAi = globalThis.DocSecurity.sanitizeSafeText(aiItem.translation, { formulaSafe: true }).trim();
@@ -5120,7 +5254,7 @@ globalThis.SlideLingo = (() => {
             untranslated++;
             continue;
           }
-          const record = injectActionIntoParagraph(doc, entry.body, action, value, lang, font, target);
+          const record = injectActionIntoParagraph(doc, entry.body, effectiveAction, value, lang, font, target);
           if (record) {
             shapeModified = true;
             placed++;
@@ -5180,7 +5314,7 @@ globalThis.SlideLingo = (() => {
   }
 
   // Hook nội bộ cho công cụ xem trước / kiểm thử bố cục
-  const _internals = { loadSlideContext, buildLayoutModel, layoutFrame, shapeStyle, rFace, rAttr, baseRunSize, relationships, resolve, part, children, child, descendants, localTransform, shapeRect, phOf, isFilled, sanitizeAllArchiveRels, sanitizeSlideAndRels, P, A, R, PT };
+  const _internals = { loadSlideContext, buildLayoutModel, solveSlideLayout, layoutFrame, shapeStyle, rFace, rAttr, baseRunSize, relationships, resolve, part, children, child, descendants, localTransform, shapeRect, phOf, isFilled, sanitizeAllArchiveRels, sanitizeSlideAndRels, candidates, classifyParagraph, collectTableEntries, isSlideChromeOrBreadcrumb, isVocabDrillLabel, isMonolingualDialogueOrDrill, directions, explicit, GLOSSARY, normalizeGlossaryKey, injectActionIntoParagraph, P, A, R, PT };
   return { languages, MAX_FILE, convert, _internals };
 })();
 
@@ -11668,8 +11802,9 @@ $("form").addEventListener("submit",async event=>{
         ? async ({ slideNumber, totalSlides, target: tgtCode, targetLabel, slideContextTexts, items }) => {
             const pending = [];
             const resolved = {};
+            const cacheKeyFor = it => `${tgtCode}::${it.inCard ? "C" : "W"}::${Math.round((it.charBudget || 120) / 25)}::${it.text}`;
             for (const it of items) {
-              const cacheKey = `${tgtCode}::${it.text}`;
+              const cacheKey = cacheKeyFor(it);
               if (aiSlideCache.has(cacheKey)) {
                 resolved[it.id] = aiSlideCache.get(cacheKey);
               } else {
@@ -11679,17 +11814,18 @@ $("form").addEventListener("submit",async event=>{
             if (!pending.length) return resolved;
 
             const sysPrompt =
-              `You are a senior ESL/Business English curriculum editor and translator. ` +
-              `Return STRICTLY valid JSON matching {"items":[{"id":"...","keepEnglish":false,"translation":"..."}]}.`;
+              `You are a senior ESL/Business English curriculum editor, bilingual slide typesetter, and translator. ` +
+              `Return STRICTLY valid JSON matching {"items":[{"id":"...","keepEnglish":false,"mode":"inline|newline|paren","translation":"..."}]}.`;
             const usrPrompt = [
               `Target language: ${targetLabel} (code: ${tgtCode}). Slide ${slideNumber}/${totalSlides}.`,
               `Rules:`,
-              `1. keepEnglish: set true ONLY for student drill sentences, fill-in-the-blank prompts/answers, dialogue lines, or standalone English example words that must stay monolingual English in ESL lessons. NEVER set keepEnglish=true for slide titles, learning objectives, student directions/instructions, grammar/pronunciation rule explanations, or section headings.`,
-              `2. translation: concise, natural translation in ${targetLabel} matching the slide space (no filler).`,
-              `3. Keep English patterns inside quotation marks ("..." or “...”) verbatim in English while translating bracketed [placeholders] inside them; keep IPA /.../ verbatim.`,
-              `4. Plain text only — zero HTML, XML, markdown, scripts, or formula prefixes.`,
+              `1. keepEnglish: set true ONLY for student dialogues (A: / B: / speaker turns), fill-in-the-blank prompts (e.g. 1____), multiple-choice options (a. / b. / c.), IPA phonetics, standalone vocab flashcards, or pure English example sentences that must stay monolingual English in ESL lessons. NEVER set keepEnglish=true for slide headings (e.g. CONVERSATION, PAIR WORK, Key expressions), lead-in labels (e.g. Your plans are to:), role-play task prompts inside Student A/B cards, learning objectives, grammar notes, or student directions.`,
+              `2. translation: natural, accurate ${targetLabel} fit to slide geometry. Respect charBudget — when inCard=true or charBudget is tight, phrase concisely so translated lines do not overflow narrow cards (boxWidthPt x boxHeightPt).`,
+              `3. mode: pick "paren" for short headings/buttons/badges (renders "(translation)" inline), "inline" for medium lines that fit on the same line, or "newline" for sentences, bullet items, and tight card content so translation stacks cleanly below source text.`,
+              `4. Keep quoted English patterns ("..." / “...”) verbatim while translating [placeholders] inside them; keep IPA /.../ verbatim.`,
+              `5. Plain text only — zero HTML, XML, markdown, scripts, or formula prefixes.`,
               `Slide full context:\n${(slideContextTexts || []).map(l => `- ${l}`).join("\n")}`,
-              `Items to process:\n${JSON.stringify(pending.map(p => ({ id: p.id, isInstruction: p.isInstruction, text: p.text })))}`,
+              `Items to process (with OpenXML box geometry):\n${JSON.stringify(pending.map(p => ({ id: p.id, isInstruction: p.isInstruction, needsAiTriage: Boolean(p.needsAiTriage), inCard: Boolean(p.inCard), boxWidthPt: p.boxWidthPt, boxHeightPt: p.boxHeightPt, fontSizePt: p.fontSizePt, charBudget: p.charBudget, defaultMode: p.mode, text: p.text })))}`,
             ].join("\n\n");
 
             const resp = await summaryEngine.callLlmJson(
@@ -11706,11 +11842,13 @@ $("form").addEventListener("submit",async event=>{
               const rid = String(row?.id || "").trim();
               const orig = byId.get(rid);
               if (!orig) continue;
+              const rawMode = String(row?.mode || "").trim().toLowerCase();
               const entry = {
                 keepEnglish: Boolean(row.keepEnglish),
+                mode: (rawMode === "inline" || rawMode === "newline" || rawMode === "paren") ? rawMode : null,
                 translation: typeof row.translation === "string" ? row.translation.trim() : "",
               };
-              aiSlideCache.set(`${tgtCode}::${orig.text}`, entry);
+              aiSlideCache.set(cacheKeyFor(orig), entry);
               resolved[rid] = entry;
             }
             return resolved;

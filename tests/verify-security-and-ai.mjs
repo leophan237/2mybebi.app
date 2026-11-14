@@ -494,4 +494,456 @@ await test("SlideLingo.convert nhận aiTranslateSlideBatch và UI form submit g
   assert.ok(html.includes("if ($(\"ai-config-panel\")) $(\"ai-config-panel\").hidden = false;"));
 });
 
+console.log("\n[5/5] Kiểm thử SlideLingo OpenXML Triage, GPT-6 Luna Batch & Reflow Chống Tràn Thẻ / Đè Top Bar");
+
+function createXmlDomEnv() {
+  const decodeXml = s => String(s)
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");
+  const encodeXml = s => String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
+  class TextNode {
+    constructor(data, ownerDocument) {
+      this.nodeType = 3;
+      this.data = String(data);
+      this.parentNode = null;
+      this.ownerDocument = ownerDocument;
+    }
+    get textContent() { return this.data; }
+    set textContent(v) { this.data = String(v ?? ""); }
+    cloneNode() { return new TextNode(this.data, this.ownerDocument); }
+  }
+
+  class XmlElement {
+    constructor(ns, tagName, ownerDocument) {
+      this.nodeType = 1;
+      this.namespaceURI = ns || null;
+      this.tagName = tagName;
+      this.nodeName = tagName;
+      this.localName = tagName.includes(":") ? tagName.split(":")[1] : tagName;
+      this.prefix = tagName.includes(":") ? tagName.split(":")[0] : null;
+      this.ownerDocument = ownerDocument;
+      this.parentNode = null;
+      this.childNodes = [];
+      this._attrs = [];
+    }
+    get children() { return this.childNodes.filter(c => c.nodeType === 1); }
+    get firstChild() { return this.childNodes[0] || null; }
+    get lastChild() { return this.childNodes[this.childNodes.length - 1] || null; }
+    get nextSibling() {
+      if (!this.parentNode) return null;
+      const idx = this.parentNode.childNodes.indexOf(this);
+      return idx >= 0 && idx + 1 < this.parentNode.childNodes.length ? this.parentNode.childNodes[idx + 1] : null;
+    }
+    get textContent() {
+      return this.childNodes.map(c => c.textContent).join("");
+    }
+    set textContent(v) {
+      this.childNodes = [];
+      if (v !== "" && v != null) {
+        const tn = new TextNode(String(v), this.ownerDocument);
+        tn.parentNode = this;
+        this.childNodes.push(tn);
+      }
+    }
+    appendChild(node) {
+      if (node.parentNode) node.parentNode.removeChild(node);
+      node.parentNode = this;
+      node.ownerDocument = this.ownerDocument;
+      this.childNodes.push(node);
+      return node;
+    }
+    insertBefore(newNode, refNode) {
+      if (!refNode) return this.appendChild(newNode);
+      if (newNode.parentNode) newNode.parentNode.removeChild(newNode);
+      const idx = this.childNodes.indexOf(refNode);
+      if (idx === -1) return this.appendChild(newNode);
+      newNode.parentNode = this;
+      newNode.ownerDocument = this.ownerDocument;
+      this.childNodes.splice(idx, 0, newNode);
+      return newNode;
+    }
+    removeChild(node) {
+      const idx = this.childNodes.indexOf(node);
+      if (idx >= 0) {
+        this.childNodes.splice(idx, 1);
+        node.parentNode = null;
+      }
+      return node;
+    }
+    getAttribute(name) {
+      const a = this._attrs.find(x => x.name === name);
+      return a ? a.value : null;
+    }
+    hasAttribute(name) {
+      return this._attrs.some(x => x.name === name);
+    }
+    setAttribute(name, val) {
+      const v = String(val);
+      const a = this._attrs.find(x => x.name === name);
+      if (a) a.value = v;
+      else {
+        const local = name.includes(":") ? name.split(":")[1] : name;
+        this._attrs.push({ name, localName: local, ns: null, value: v });
+      }
+    }
+    setAttributeNS(ns, qName, val) {
+      const v = String(val);
+      const local = qName.includes(":") ? qName.split(":")[1] : qName;
+      const a = this._attrs.find(x => x.name === qName || (x.ns === ns && x.localName === local));
+      if (a) a.value = v;
+      else this._attrs.push({ name: qName, localName: local, ns, value: v });
+    }
+    getAttributeNS(ns, localName) {
+      const a = this._attrs.find(x => (x.ns === ns && x.localName === localName) || (ns === "http://schemas.openxmlformats.org/officeDocument/2006/relationships" && x.name === "r:" + localName));
+      return a ? a.value : null;
+    }
+    removeAttribute(name) {
+      const idx = this._attrs.findIndex(x => x.name === name);
+      if (idx >= 0) this._attrs.splice(idx, 1);
+    }
+    getElementsByTagNameNS(ns, local) {
+      const out = [];
+      const walk = el => {
+        for (const c of el.children) {
+          if ((ns === "*" || c.namespaceURI === ns) && (local === "*" || c.localName === local)) out.push(c);
+          walk(c);
+        }
+      };
+      walk(this);
+      return out;
+    }
+    cloneNode(deep) {
+      const copy = new XmlElement(this.namespaceURI, this.tagName, this.ownerDocument);
+      copy._attrs = this._attrs.map(a => ({ ...a }));
+      if (deep) {
+        for (const c of this.childNodes) {
+          const cc = c.cloneNode(true);
+          cc.parentNode = copy;
+          copy.childNodes.push(cc);
+        }
+      }
+      return copy;
+    }
+  }
+
+  class XmlDocument {
+    constructor() {
+      this.nodeType = 9;
+      this.documentElement = null;
+      this.ownerDocument = this;
+    }
+    createElementNS(ns, qName) {
+      return new XmlElement(ns, qName, this);
+    }
+    getElementsByTagNameNS(ns, local) {
+      const out = [];
+      if (!this.documentElement) return out;
+      if ((ns === "*" || this.documentElement.namespaceURI === ns) && (local === "*" || this.documentElement.localName === local)) {
+        out.push(this.documentElement);
+      }
+      return out.concat(this.documentElement.getElementsByTagNameNS(ns, local));
+    }
+  }
+
+  class DOMParser {
+    parseFromString(xml) {
+      const doc = new XmlDocument();
+      const stack = [];
+      const nsStack = [{ "": "" }];
+      const tokenRe = /<\?[\s\S]*?\?>|<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<(\/?)([A-Za-z_][\w:.-]*)((?:\s+[A-Za-z_][\w:.-]*\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*(\/?)>|([^<]+)/g;
+      let m;
+      while ((m = tokenRe.exec(xml))) {
+        if (m[1] !== undefined) {
+          if (stack.length) {
+            const tn = new TextNode(m[1], doc);
+            tn.parentNode = stack[stack.length - 1];
+            stack[stack.length - 1].childNodes.push(tn);
+          }
+          continue;
+        }
+        if (m[6] !== undefined) {
+          if (stack.length) {
+            const txt = decodeXml(m[6]);
+            const tn = new TextNode(txt, doc);
+            tn.parentNode = stack[stack.length - 1];
+            stack[stack.length - 1].childNodes.push(tn);
+          }
+          continue;
+        }
+        if (m[3] === undefined) continue;
+        const closing = m[2] === "/";
+        const qName = m[3];
+        const attrRaw = m[4] || "";
+        const selfClosing = m[5] === "/";
+        if (closing) {
+          stack.pop();
+          nsStack.pop();
+          continue;
+        }
+        const curNs = { ...nsStack[nsStack.length - 1] };
+        const attrs = [];
+        const attrRe = /([A-Za-z_][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+        let am;
+        while ((am = attrRe.exec(attrRaw))) {
+          const k = am[1];
+          const v = decodeXml(am[2] !== undefined ? am[2] : am[3]);
+          if (k === "xmlns") curNs[""] = v;
+          else if (k.startsWith("xmlns:")) curNs[k.slice(6)] = v;
+          attrs.push({ name: k, value: v });
+        }
+        const prefix = qName.includes(":") ? qName.split(":")[0] : "";
+        const elNs = curNs[prefix] || null;
+        const el = new XmlElement(elNs, qName, doc);
+        for (const a of attrs) {
+          const ap = a.name.includes(":") ? a.name.split(":")[0] : "";
+          const local = a.name.includes(":") ? a.name.split(":")[1] : a.name;
+          el._attrs.push({ name: a.name, localName: local, ns: ap ? (curNs[ap] || null) : null, value: a.value });
+        }
+        if (!doc.documentElement) doc.documentElement = el;
+        else if (stack.length) el.parentNode = stack[stack.length - 1], stack[stack.length - 1].childNodes.push(el);
+        if (!selfClosing) {
+          stack.push(el);
+          nsStack.push(curNs);
+        }
+      }
+      return doc;
+    }
+  }
+
+  class XMLSerializer {
+    serializeToString(node) {
+      if (!node) return "";
+      if (node.nodeType === 9) return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + this.serializeToString(node.documentElement);
+      if (node.nodeType === 3) return encodeXml(node.data);
+      const attrs = node._attrs.map(a => ` ${a.name}="${encodeXml(a.value)}"`).join("");
+      if (!node.childNodes.length) return `<${node.tagName}${attrs}/>`;
+      return `<${node.tagName}${attrs}>${node.childNodes.map(c => this.serializeToString(c)).join("")}</${node.tagName}>`;
+    }
+  }
+
+  const fakeDoc = {
+    createElement(tag) {
+      if (tag === "canvas") {
+        return {
+          width: 8,
+          height: 8,
+          getContext() {
+            return {
+              font: "16px sans-serif",
+              measureText(t) {
+                const fm = /([\d.]+)px/.exec(this.font);
+                const sz = fm ? parseFloat(fm[1]) : 16;
+                let w = 0;
+                for (const ch of String(t || "")) {
+                  w += /[\u3000-\uffef\u4e00-\u9faf]/.test(ch) ? sz * 1.0 : sz * 0.54;
+                }
+                return { width: w };
+              },
+              drawImage() {},
+              getImageData() { return { data: new Uint8ClampedArray(16) }; },
+            };
+          },
+        };
+      }
+      return {};
+    },
+  };
+
+  const script1 = scriptMatches[1];
+  const endMarker = "globalThis.LessonSummary = (() => {";
+  const slSrc = script1.slice(0, script1.indexOf(endMarker));
+  const sandbox = {
+    globalThis: null, self: null, window: undefined,
+    DOMParser, XMLSerializer, document: fakeDoc,
+    TextDecoder, TextEncoder, URL, Error, Set, Map, WeakMap, ArrayBuffer, Uint8Array, Uint8ClampedArray, DataView,
+    Array, String, Number, Boolean, Math, Object, RegExp, Date, JSON, Promise, console,
+    setTimeout, clearTimeout, setImmediate,
+  };
+  sandbox.globalThis = sandbox;
+  sandbox.self = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(scriptMatches[0], sandbox);
+  vm.runInContext(slSrc, sandbox);
+  return sandbox;
+}
+
+const slEnv = createXmlDomEnv();
+const { SlideLingo } = slEnv;
+const PT = SlideLingo._internals.PT;
+const emu = pt => Math.round(pt * PT);
+
+async function makeSingleSlidePptx(slideXml) {
+  const z = new slEnv.JSZip();
+  z.file("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/></Types>');
+  z.file("ppt/presentation.xml", '<?xml version="1.0" encoding="UTF-8"?><p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:sldIdLst><p:sldId id="256" r:id="rId1"/></p:sldIdLst><p:sldSz cx="12192000" cy="6858000"/></p:presentation>');
+  z.file("ppt/_rels/presentation.xml.rels", '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide1.xml"/></Relationships>');
+  z.file("ppt/slides/slide1.xml", slideXml);
+  z.file("ppt/slides/_rels/slide1.xml.rels", '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>');
+  const u8 = await z.generateAsync({ type: "uint8array" });
+  return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+}
+
+await test("Slide 1 (Role-play CONVERSATION / PAIR WORK): dịch đủ tiêu đề + thẻ Student A/B và đẩy đường viền đáy không cắt ngang chữ", async () => {
+  const s1Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:graphicFrame>
+        <p:nvGraphicFramePr><p:cNvPr id="2" name="TopBar"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>
+        <p:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(960)}" cy="${emu(30)}"/></p:xfrm>
+        <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
+          <a:tbl><a:tblGrid><a:gridCol w="${emu(240)}"/><a:gridCol w="${emu(720)}"/></a:tblGrid>
+            <a:tr h="${emu(30)}">
+              <a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600"/><a:t>Unit 2</a:t></a:r></a:p></a:txBody></a:tc>
+              <a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600"/><a:t>| Lesson 2 | Creative speaking practice</a:t></a:r></a:p></a:txBody></a:tc>
+            </a:tr>
+          </a:tbl>
+        </a:graphicData></a:graphic>
+      </p:graphicFrame>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="ConvTitle"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(96)}" y="${emu(36)}"/><a:ext cx="${emu(260)}" cy="${emu(28)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2000" b="1"/><a:t>CONVERSATION</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="PairWork"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(190)}" y="${emu(64)}"/><a:ext cx="${emu(220)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800" b="1"/><a:t>PAIR WORK</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="CardABg"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(36)}" y="${emu(220)}"/><a:ext cx="${emu(400)}" cy="${emu(210)}"/></a:xfrm><a:solidFill><a:srgbClr val="EDEDED"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"/><a:t>Student A</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="6" name="CardABody"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(44)}" y="${emu(248)}"/><a:ext cx="${emu(384)}" cy="${emu(176)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Your role is to suggest and ask questions to guide the planning.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Your plans are to:</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Ask about the immediate next steps.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Ask what this means for long-term collaboration.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:cxnSp>
+        <p:nvCxnSpPr><p:cNvPr id="7" name="CardABorder"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(36)}" y="${emu(430)}"/><a:ext cx="${emu(400)}" cy="${emu(2)}"/></a:xfrm></p:spPr>
+      </p:cxnSp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="8" name="KeyExprBtn"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(700)}" y="${emu(488)}"/><a:ext cx="${emu(140)}" cy="${emu(30)}"/></a:xfrm><a:solidFill><a:srgbClr val="6AA84F"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400" b="1"/><a:t>Key expressions</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const buf = await makeSingleSlidePptx(s1Xml);
+  const aiCaptured = [];
+  const out = await SlideLingo.convert(buf, "ja", async text => `[JA] ${text}`, () => {}, {
+    aiTranslateSlideBatch: async ({ items }) => {
+      aiCaptured.push(...items);
+      const map = {};
+      for (const it of items) {
+        map[it.id] = { keepEnglish: false, mode: it.inCard ? "newline" : "inline", translation: `訳:${it.text.slice(0, 24)}` };
+      }
+      return map;
+    },
+  });
+  assert.ok(out.bytes, "Slide 1 phải xuất ra PPTX đã dịch");
+  assert.ok(aiCaptured.some(it => it.inCard === true && it.charBudget > 0 && it.boxWidthPt === 384), "GPT-6 Luna batch phải nhận inCard + boxWidthPt + charBudget của thẻ");
+
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const resXml = await outZip.file("ppt/slides/slide1.xml").async("string");
+  assert.ok(!resXml.includes("ユニット2"), "Top Bar table 'Unit 2' không được dịch");
+  assert.ok(resXml.includes("会話"), "CONVERSATION phải được dịch");
+  assert.ok(resXml.includes("ペアワーク"), "PAIR WORK phải được dịch");
+  assert.ok(resXml.includes("計画："), "Your plans are to: phải được dịch");
+  assert.ok(resXml.includes("重要表現"), "Key expressions phải được dịch");
+
+  const resDoc = new slEnv.DOMParser().parseFromString(resXml, "application/xml");
+  const sps = Array.from(resDoc.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "sp"));
+  const bg = sps.find(s => s.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "cNvPr")[0]?.getAttribute("name") === "CardABg");
+  const cxn = resDoc.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "cxnSp")[0];
+  const bgOffY = Number(bg.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/main", "off")[0].getAttribute("y"));
+  const bgExtCy = Number(bg.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/main", "ext")[0].getAttribute("cy"));
+  const cxnY = Number(cxn.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/main", "off")[0].getAttribute("y"));
+  assert.ok(bgExtCy > emu(210), `Thẻ nền CardABg phải giãn cao hơn 210pt khi nội dung tăng: ${bgExtCy / PT}pt`);
+  assert.ok(cxnY >= bgOffY + bgExtCy - emu(2), `Đường viền đáy CardABorder (${cxnY / PT}pt) phải trượt xuống đáy thẻ (${(bgOffY + bgExtCy) / PT}pt) thay vì cắt ngang chữ`);
+});
+
+await test("Slide 2 (Exercise 1 + Top Bar + Dialogues A/B): giữ nguyên Unit 2 & câu thoại/trắc nghiệm, đẩy Choose the best answer xuống dưới Top Bar", async () => {
+  const s2Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:graphicFrame>
+        <p:nvGraphicFramePr><p:cNvPr id="2" name="TopBar"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>
+        <p:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(960)}" cy="${emu(46)}"/></p:xfrm>
+        <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
+          <a:tbl><a:tblGrid><a:gridCol w="${emu(220)}"/><a:gridCol w="${emu(740)}"/></a:tblGrid>
+            <a:tr h="${emu(46)}">
+              <a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800"/><a:t>Unit 2</a:t></a:r></a:p></a:txBody></a:tc>
+              <a:tc><a:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800"/><a:t>| Lesson 2 | Grammar recap | Exercise 1</a:t></a:r></a:p></a:txBody></a:tc>
+            </a:tr>
+          </a:tbl>
+        </a:graphicData></a:graphic>
+      </p:graphicFrame>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="PromptBox"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(80)}" y="${emu(50)}"/><a:ext cx="${emu(680)}" cy="${emu(34)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr anchor="ctr"/><a:p><a:r><a:rPr sz="1800" b="1"/><a:t>Choose the best answer to complete the sentences.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="BubbleA"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(85)}" y="${emu(102)}"/><a:ext cx="${emu(460)}" cy="${emu(36)}"/></a:xfrm><a:solidFill><a:srgbClr val="FCE5CD"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600"/><a:t>A: Would you like to join us for dinner after the meeting?</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="BubbleB"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(180)}" y="${emu(148)}"/><a:ext cx="${emu(680)}" cy="${emu(64)}"/></a:xfrm><a:solidFill><a:srgbClr val="CFE2F3"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1600"/><a:t>B: That’s kind of you, but I 1______have an early night. I’m tired after the journey.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1600"/><a:t>a. will   b. could   c. am going to</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const buf = await makeSingleSlidePptx(s2Xml);
+  const aiSent = [];
+  const out = await SlideLingo.convert(buf, "ja", async text => `[JA] ${text}`, () => {}, {
+    aiTranslateSlideBatch: async ({ items }) => {
+      aiSent.push(...items);
+      const map = {};
+      for (const it of items) map[it.id] = { keepEnglish: false, mode: "newline", translation: "文を完成させる最適な答えを選びなさい。" };
+      return map;
+    },
+  });
+  assert.ok(out.bytes, "Slide 2 phải xuất ra PPTX đã dịch");
+  assert.ok(!aiSent.some(it => /Would you like|1______|am going to/.test(it.text)), "Câu thoại A:/B:, chỗ trống 1______ và đáp án a/b/c phải được giữ 100% tiếng Anh ngay từ khâu triage");
+
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const resXml = await outZip.file("ppt/slides/slide1.xml").async("string");
+  assert.ok(!resXml.includes("ユニット2"), "Bảng Top Bar 'Unit 2' không được dịch sai thành ユニット2");
+  assert.ok(resXml.includes("文を完成させる最適な答えを選びなさい。"), "PromptBox phải được dịch chuẩn xác");
+  assert.ok(resXml.includes("A: Would you like to join us for dinner after the meeting?"));
+  assert.ok(resXml.includes("a. will   b. could   c. am going to"));
+
+  const resDoc = new slEnv.DOMParser().parseFromString(resXml, "application/xml");
+  const sps = Array.from(resDoc.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "sp"));
+  const promptSp = sps.find(s => s.getElementsByTagNameNS("http://schemas.openxmlformats.org/presentationml/2006/main", "cNvPr")[0]?.getAttribute("name") === "PromptBox");
+  const promptY = Number(promptSp.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/main", "off")[0].getAttribute("y"));
+  assert.ok(promptY >= emu(48), `PromptBox (anchor="ctr", y=${promptY / PT}pt) phải nằm bên dưới Top Bar (46pt), tuyệt đối không đè ngược lên trên`);
+});
+
 console.log(`\nHoàn tất: ${passed}/${passed} bài kiểm thử đã PASS!\n`);
