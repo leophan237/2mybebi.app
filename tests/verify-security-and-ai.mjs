@@ -1042,7 +1042,7 @@ await test("Key expressions (3x2 Table + 6 overlaid phrase boxes): dịch tiêu 
       <p:sp>
         <p:nvSpPr><p:cNvPr id="3" name="SubCyan"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
         <p:spPr><a:xfrm><a:off x="${emu(30)}" y="${emu(50)}"/><a:ext cx="${emu(560)}" cy="${emu(32)}"/></a:xfrm><a:noFill/></p:spPr>
-        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800" b="1"><a:solidFill><a:srgbClr val="22B8CF"/></a:solidFill></a:rPr><a:t>Key expressions: A phone call at work</a:t></a:r></a:p></p:txBody>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800" b="1"><a:solidFill><a:srgbClr val="3AD0EC"/></a:solidFill></a:rPr><a:t>Key expressions: A phone call at work</a:t></a:r></a:p></p:txBody>
       </p:sp>
       <p:sp>
         <p:nvSpPr><p:cNvPr id="4" name="DarkBtn"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
@@ -1158,7 +1158,7 @@ await test("Key expressions (3x2 Table + 6 overlaid phrase boxes): dịch tiêu 
     const targetRun = runs.find(r => (r.textContent || "").includes(matchText));
     return targetRun?.getElementsByTagNameNS(A, "srgbClr")[0]?.getAttribute("val");
   };
-  assert.equal(runColorOf(findSp("SubCyan"), "VN:Key expressions"), "B4235A", "Chữ gốc màu cyan #22B8CF phải dùng bản dịch màu Rose-Berry B4235A");
+  assert.equal(runColorOf(findSp("SubCyan"), "VN:Key expressions"), "B4235A", "Chữ gốc màu xanh lam sáng #3AD0EC trên nền sáng phải dùng bản dịch màu Rose-Berry B4235A, không được dùng vàng FEF08A");
   assert.equal(runColorOf(findSp("DarkBtn"), "Luyện tập"), "FEF08A", "Chữ gốc màu trắng #FFFFFF trên nền tối phải dùng bản dịch màu vàng ấm FEF08A");
   assert.equal(runColorOf(findSp("CellBoxR0C0"), "VN:Hello / Hi."), "1D4ED8", "Chữ gốc màu đen #000000 phải dùng bản dịch màu Cobalt Blue 1D4ED8");
 

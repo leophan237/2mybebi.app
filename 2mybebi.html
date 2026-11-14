@@ -3035,6 +3035,25 @@ globalThis.SlideLingo = (() => {
     return null;
   }
 
+  function resolveHostBgHex(body, ctx) {
+    const hostNode = body?.parentNode;
+    if (!hostNode) return null;
+    if (hostNode.namespaceURI === P) {
+      const spPr = child(hostNode, P, "spPr");
+      const solid = resolveFillHex(child(spPr, A, "solidFill"), ctx);
+      if (solid) return solid;
+      if (!child(spPr, A, "noFill")) {
+        const fillRef = child(child(hostNode, P, "style"), A, "fillRef");
+        if (fillRef && fillRef.getAttribute("idx") !== "0") {
+          return resolveFillHex(fillRef, ctx);
+        }
+      }
+    } else if (hostNode.namespaceURI === A && hostNode.localName === "tc") {
+      return resolveFillHex(child(child(hostNode, A, "tcPr"), A, "solidFill"), ctx);
+    }
+    return null;
+  }
+
   function resolveSourceTextHex(sourceRPr, pNode, body, ctx) {
     const rFill = resolveFillHex(child(sourceRPr, A, "solidFill"), ctx);
     if (rFill) return rFill;
@@ -3048,29 +3067,35 @@ globalThis.SlideLingo = (() => {
         const refHex = child(styleFontRef, A, "srgbClr")?.getAttribute("val")?.toUpperCase() || resolveSchemeFallbackHex(refScheme, ctx);
         if (refHex) return refHex;
       }
-      const spBgHex = resolveFillHex(child(child(hostNode, P, "spPr"), A, "solidFill"), ctx);
-      if (spBgHex && /^[0-9A-F]{6}$/.test(spBgHex) && relLum(spBgHex) < 0.42) return "FFFFFF";
-    } else if (hostNode && hostNode.namespaceURI === A && hostNode.localName === "tc") {
-      const tcBgHex = resolveFillHex(child(child(hostNode, A, "tcPr"), A, "solidFill"), ctx);
-      if (tcBgHex && /^[0-9A-F]{6}$/.test(tcBgHex) && relLum(tcBgHex) < 0.42) return "FFFFFF";
     }
+    const hostBgHex = resolveHostBgHex(body, ctx);
+    if (hostBgHex && /^[0-9A-F]{6}$/.test(hostBgHex) && relLum(hostBgHex) < 0.42) return "FFFFFF";
     return resolveSchemeFallbackHex("tx1", ctx) || "000000";
   }
 
   /**
    * Chọn màu chữ tương phản & thẩm mỹ cho bản dịch để phân biệt trực quan với câu tiếng Anh gốc:
-   * - Nền tối / chữ gốc sáng màu -> Vàng kem ấm (#FEF08A)
-   * - Chữ gốc xanh dương / xanh ngọc -> Đỏ rượu Rose-Berry (#B4235A)
+   * - Chỉ dùng Vàng kem ấm (#FEF08A) khi nền khối/ô bảng thực sự tối hoặc chữ gốc là trắng/xám rất nhạt trên nền tối
+   * - Chữ gốc xanh lam / xanh dương / xanh ngọc (kể cả xanh sáng như #38BDF8, #00CCFF) -> Đỏ rượu Rose-Berry (#B4235A)
    * - Mặc định chữ gốc đen / xám / đỏ -> Xanh Cobalt đậm (#1D4ED8)
    */
   function pickBilingualAccentHex(sourceRPr, pNode, body, ctx) {
+    const hostBgHex = resolveHostBgHex(body, ctx);
+    const hasDarkHostBg = !!(hostBgHex && /^[0-9A-F]{6}$/.test(hostBgHex) && relLum(hostBgHex) < 0.42);
+    if (hasDarkHostBg) return "FEF08A";
+
     const srcHex = resolveSourceTextHex(sourceRPr, pNode, body, ctx);
     if (!/^[0-9A-F]{6}$/.test(srcHex)) return "1D4ED8";
-    if (relLum(srcHex) >= 0.48) return "FEF08A";
     const r = parseInt(srcHex.slice(0, 2), 16);
     const g = parseInt(srcHex.slice(2, 4), 16);
     const b = parseInt(srcHex.slice(4, 6), 16);
-    if ((b >= r + 24 && (b >= 90 || g >= 90)) || (g >= r + 24 && b >= r + 15)) {
+    const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+
+    // Chữ gốc trắng / xám nhạt trung tính (chỉ xuất hiện trên nền tối hoặc ảnh tối) -> Vàng kem ấm
+    if (chroma <= 45 && relLum(srcHex) >= 0.72) return "FEF08A";
+
+    // Chữ gốc thuộc tông xanh lam / xanh dương / cyan / teal (cả đậm lẫn sáng) -> Rose-Berry đậm dễ đọc trên nền sáng
+    if ((b >= r + 20 && (b >= 80 || g >= 80)) || (g >= r + 20 && b >= r + 10)) {
       return "B4235A";
     }
     return "1D4ED8";
