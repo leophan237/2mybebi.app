@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
@@ -535,6 +535,8 @@ function createXmlDomEnv() {
       this._attrs = [];
     }
     get children() { return this.childNodes.filter(c => c.nodeType === 1); }
+    get firstElementChild() { return this.children[0] || null; }
+    get attributes() { return this._attrs; }
     get firstChild() { return this.childNodes[0] || null; }
     get lastChild() { return this.childNodes[this.childNodes.length - 1] || null; }
     get nextSibling() {
@@ -1140,11 +1142,13 @@ await test("Key expressions (3x2 Table + 6 overlaid phrase boxes): dịch tiêu 
 
   const outZip = await slEnv.JSZip.loadAsync(out.bytes);
   const resXml = await outZip.file("ppt/slides/slide1.xml").async("string");
+  assert.ok(resXml.includes("Mẫu câu trọng tâm: Gọi điện thoại nơi công sở"), "Tiêu đề Key expressions phải được dịch chuẩn");
   for (const hdr of ["Starting/Answering a call", "Asking for someone", "Leaving a message", "Taking a message", "Checking details", "Ending a call"]) {
-    assert.ok(resXml.includes(`(VN:${hdr})`), `Tiêu đề bảng "${hdr}" phải được dịch gọn trong ngoặc`);
+    assert.ok(!resXml.includes(`VN:${hdr}`), `Tiêu đề nhóm "${hdr}" trong lưới Key expressions phải được lược bỏ (giữ nguyên tiếng Anh)`);
   }
-  assert.ok(resXml.includes("VN:Could I leave a message?"), "Khung câu hàng 2 phải được dịch đồng bộ");
-  assert.ok(resXml.includes("VN:OK. Thanks."), "Khung câu hàng 3 phải được dịch đồng bộ");
+  assert.ok(!resXml.includes("VN:Could I leave a message?"), "Các mẫu câu Key expressions phải được lược bỏ (giữ nguyên tiếng Anh)");
+  assert.ok(!resXml.includes("VN:OK. Thanks."), "Các mẫu câu ending trong Key expressions phải được lược bỏ");
+  assert.ok(!resXml.includes("B4235A") && !resXml.includes("FEF08A"), "Không còn sử dụng màu B4235A hoặc FEF08A");
 
   const resDoc = new slEnv.DOMParser().parseFromString(resXml, "application/xml");
   const P = "http://schemas.openxmlformats.org/presentationml/2006/main";
@@ -1152,25 +1156,63 @@ await test("Key expressions (3x2 Table + 6 overlaid phrase boxes): dịch tiêu 
   const sps = Array.from(resDoc.getElementsByTagNameNS(P, "sp"));
   const findSp = name => sps.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === name);
 
-  // Kiểm tra màu bản dịch phân biệt theo màu chữ gốc
   const runColorOf = (sp, matchText) => {
     const runs = Array.from(sp.getElementsByTagNameNS(A, "r"));
     const targetRun = runs.find(r => (r.textContent || "").includes(matchText));
     return targetRun?.getElementsByTagNameNS(A, "srgbClr")[0]?.getAttribute("val");
   };
-  assert.equal(runColorOf(findSp("SubCyan"), "VN:Key expressions"), "B4235A", "Chữ gốc màu xanh lam sáng #3AD0EC trên nền sáng phải dùng bản dịch màu Rose-Berry B4235A, không được dùng vàng FEF08A");
-  assert.equal(runColorOf(findSp("DarkBtn"), "Luyện tập"), "FEF08A", "Chữ gốc màu trắng #FFFFFF trên nền tối phải dùng bản dịch màu vàng ấm FEF08A");
-  assert.equal(runColorOf(findSp("CellBoxR0C0"), "VN:Hello / Hi."), "1D4ED8", "Chữ gốc màu đen #000000 phải dùng bản dịch màu Cobalt Blue 1D4ED8");
+  assert.equal(runColorOf(findSp("SubCyan"), "Mẫu câu trọng tâm"), "000000", "Chữ gốc màu xanh lam sáng #3AD0EC trên nền sáng phải dùng bản dịch màu Đen 000000");
+  assert.equal(runColorOf(findSp("DarkBtn"), "Luyện tập"), "FFFFFF", "Chữ gốc màu trắng #FFFFFF trên nền tối phải dùng bản dịch màu Trắng FFFFFF");
+});
 
-  // Kiểm tra khung CellBoxR0C1 (7 dòng dày) không leo lên tiêu đề "Asking for someone" (y>=115pt) và không tràn xuống hàng 2 (y+h<=232pt)
-  const r0c1 = findSp("CellBoxR0C1");
-  const r0c1Y = Number(r0c1.getElementsByTagNameNS(A, "off")[0].getAttribute("y")) / PT;
-  const r0c1H = Number(r0c1.getElementsByTagNameNS(A, "ext")[0].getAttribute("cy")) / PT;
-  assert.ok(r0c1Y >= 114, `CellBoxR0C1 (y=${r0c1Y.toFixed(1)}pt) phải nằm dưới tiêu đề Asking for someone`);
-  assert.ok(r0c1Y + r0c1H <= 232, `CellBoxR0C1 (bottom=${(r0c1Y + r0c1H).toFixed(1)}pt) không được tràn qua đáy hàng 1 (232pt) xuống Taking a message`);
-  assert.ok(r0c1.getElementsByTagNameNS(A, "normAutofit").length >= 1, "CellBoxR0C1 phải được gắn <a:normAutofit/> chuẩn ECMA-376");
-  const scaledSizes = Array.from(r0c1.getElementsByTagNameNS(A, "rPr")).map(r => Number(r.getAttribute("sz"))).filter(Boolean);
-  assert.ok(scaledSizes.some(sz => sz < 1400), `CellBoxR0C1 phải tự co font size nhỏ hơn 14pt để vừa ô: [${scaledSizes.join(",")}]`);
+await test("Cobalt Blue (#1D4ED8) + normAutofit chống tràn thẻ hướng dẫn nhiều dòng (Instruction card)", async () => {
+  const slideXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+      <p:pic>
+        <p:nvPicPr><p:cNvPr id="9" name="CardBg"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr>
+        <p:blipFill><a:blip r:embed="rId2"/></p:blipFill>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(120)}"/><a:ext cx="${emu(416)}" cy="${emu(118)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr>
+      </p:pic>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="10" name="InstrCard"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(64)}" y="${emu(124)}"/><a:ext cx="${emu(408)}" cy="${emu(110)}"/></a:xfrm><a:solidFill><a:srgbClr val="F8FAFC"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr anchor="t" wrap="square"/>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>Instruction:</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>Work in pairs to ask and answer the questions carefully.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>Read the company profile and take short notes about tasks.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>Check your partner's answers and switch roles together.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="000000"/></a:solidFill></a:rPr><a:t>Share your key findings with the whole class afterwards.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="11" name="LowerWall"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(252)}"/><a:ext cx="${emu(416)}" cy="${emu(60)}"/></a:xfrm><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr><a:t>A: Next section sample text</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const buf = await makeSingleSlidePptx(slideXml);
+  const out = await SlideLingo.convert(buf, "vi", async text => `VI:${text}`, () => {});
+  assert.ok(out.bytes);
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const resXml = await outZip.file("ppt/slides/slide1.xml").async("string");
+  const P = "http://schemas.openxmlformats.org/presentationml/2006/main";
+  const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const doc = new slEnv.DOMParser().parseFromString(resXml, "application/xml");
+  const card = Array.from(doc.getElementsByTagNameNS(P, "sp")).find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === "InstrCard");
+  assert.ok(card);
+  const viRun = Array.from(card.getElementsByTagNameNS(A, "r")).find(r => (r.textContent || "").includes("VI:Work in pairs"));
+  assert.ok(viRun, "Thẻ hướng dẫn chữ đen phải được dịch");
+  assert.equal(viRun.getElementsByTagNameNS(A, "srgbClr")[0]?.getAttribute("val"), "1D4ED8", "Chữ gốc đen #000000 trên nền sáng phải dùng bản dịch Xanh lam 1D4ED8");
+  const cardY = Number(card.getElementsByTagNameNS(A, "off")[0].getAttribute("y")) / PT;
+  const cardH = Number(card.getElementsByTagNameNS(A, "ext")[0].getAttribute("cy")) / PT;
+  assert.ok(cardY + cardH <= 252, `InstrCard (bottom=${(cardY + cardH).toFixed(1)}pt) không được tràn qua mốc 252pt`);
+  assert.ok(card.getElementsByTagNameNS(A, "normAutofit").length >= 1, "InstrCard phải được gắn <a:normAutofit/> chuẩn ECMA-376");
+  const scaledSizes = Array.from(card.getElementsByTagNameNS(A, "rPr")).map(r => Number(r.getAttribute("sz"))).filter(Boolean);
+  assert.ok(scaledSizes.some(sz => sz < 1400), `InstrCard phải tự co font size nhỏ hơn 14pt để vừa thẻ: [${scaledSizes.join(",")}]`);
 });
 
 await test("Extra questions True/False (5 pill-box <p:pic>) + CONVERSATION/PAIR WORK/Key expressions: dịch đủ, không tách khung & không đè Scenario", async () => {
@@ -1298,6 +1340,135 @@ await test("Extra questions True/False (5 pill-box <p:pic>) + CONVERSATION/PAIR 
     const sr = getRect(spEl);
     assert.ok(sr.y >= pr.y - 1 && sr.y + sr.h <= pr.y + pr.h + 1,
       `TfStmt${idx} [${sr.y.toFixed(1)}..${(sr.y + sr.h).toFixed(1)}] phải nằm gọn trong PillPic${idx} [${pr.y.toFixed(1)}..${(pr.y + pr.h).toFixed(1)}], không tách khỏi khung hay đè footer`);
+  }
+});
+
+await test("Kiểm thử đối chiếu bộ quy tắc 24 slide thực tế (BE1_Lesson 5) + chỉ 3 màu (000000/FFFFFF/1D4ED8) + File Queue & Mobile CSS", async () => {
+  // 1. UI Queue & Mobile Responsive CSS checks on 2mybebi.html
+  assert.ok(!/className\s*=\s*["']queue-btn-compress["']/.test(html), "Danh sách tệp không còn nút/nhãn Nén ngay");
+  assert.ok(!/compBtn\.textContent\s*=\s*`⚡ Đã nén/.test(html), "Danh sách tệp không còn huy hiệu '⚡ Đã nén -XX%'");
+  assert.match(html, /\.file-queue-state\{[^}]*white-space:\s*nowrap[^}]*flex-shrink:\s*0/, ".file-queue-state phải có white-space:nowrap và flex-shrink:0 để '✓ Hoàn tất' không bao giờ rớt thành 2 dòng");
+  assert.match(html, /@media\(max-width:959px\)[\s\S]*\.left-rail\{display:contents\}/, "Mobile <=959px phải đặt .left-rail{display:contents} để đưa workbench lên trên");
+  assert.match(html, /@media\(max-width:959px\)[\s\S]*\.api-corner-pill\{[^}]*position:static/, "Mobile <=959px phải bỏ position fixed/absolute của .api-corner-pill để không đè chữ");
+  assert.match(html, /@media\(max-width:959px\)[\s\S]*overflow-x:clip/, "Mobile <=959px phải chặn tràn ngang overflow-x:clip");
+
+  // 2. Real 24-slide BE1_Lesson 5 deck audit (if sample file exists on disk)
+  const samplePath = "/Users/leo/Downloads/Thu\u0309y/BE1_Lesson 5_U2L2_60_Updated 12.08 - Co\u0301 logo.pptx";
+  if (!existsSync(samplePath)) {
+    console.log("  (Bỏ qua kiểm tra tệp mẫu cục bộ vì không có trên máy này)");
+    return;
+  }
+  const u8 = readFileSync(samplePath);
+  const origBytes = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+  const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const sl = SlideLingo;
+
+  const translateJa = async text => `JA:${text}`;
+  const out = await sl.convert(origBytes, "ja", translateJa, () => {});
+  assert.ok(out.bytes, "Xuất PPTX 24 slide thành công");
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const slideXml = async n => await outZip.file(`ppt/slides/slide${n}.xml`).async("string");
+
+  // Slide 1 & 2: 1x1 banner table instructions MUST be translated
+  const s1 = await slideXml(1);
+  const s2 = await slideXml(2);
+  assert.ok(s1.includes("JA:Listen to the audio"), "Slide 1 (bảng banner 1x1) phải được dịch");
+  assert.ok(s2.includes("JA:Listen to phone calls"), "Slide 2 (bảng banner 1x1) phải được dịch");
+
+  // Slide 3: skip Dicey Sentences / Column A / Column B; translate all 4 Instruction lines & preserve am/is/are + V-ing
+  const s3 = await slideXml(3);
+  assert.ok(!s3.includes("JA:Dicey Sentences"), "Slide 3: lược bỏ tiêu đề game 'Dicey Sentences'");
+  assert.ok(!s3.includes("JA:Column A") && !s3.includes("JA:Column B"), "Slide 3: lược bỏ tiêu đề bảng Column A / Column B");
+  assert.ok(s3.includes("JA:Instruction:"), "Slide 3: dòng Instruction phải được dịch");
+  assert.ok(s3.includes("JA:Make a sentence using am/is/are + V-ing form."), "Slide 3: phải bảo toàn nguyên mẫu am/is/are + V-ing");
+
+  // Slide 4: Cover -> single unified Lesson 2 translation, UNIT 2 paren, Objectives paren + 3 bullets
+  const s4 = await slideXml(4);
+  assert.ok(s4.includes("第2課：文法とビジネスコミュニケーション"), "Slide 4 Cover: gộp khối tiêu đề Lesson 2 thành 1 bản dịch");
+  assert.ok(s4.includes("(会社)"), "Slide 4 Cover: UNIT 2: COMPANY phải chèn (会社)");
+  assert.ok(s4.includes("(学習目標)"), "Slide 4 Cover: Objectives phải chèn (学習目標)");
+
+  // Slides 5, 10, 14, 18 (Section Dividers): translated & Slide 18 NOTE skipped
+  const s14 = await slideXml(14);
+  const s18 = await slideXml(18);
+  assert.ok(s14.includes("会話アクティビティ"), "Slide 14 Divider 'Conversation activator' phải được dịch");
+  assert.ok(s18.includes("追加練習") && !s18.includes("JA:NOTE:") && !s18.includes("JA:These slides"), "Slide 18: dịch EXTRA PRACTICE nhưng lược bỏ NOTE: These slides...");
+
+  // Slide 6 & 7: Grammar Form
+  const s6 = await slideXml(6);
+  const s7 = await slideXml(7);
+  assert.ok(s6.includes("(分類)") && s6.includes("(肯定文)") && !s6.includes("JA:I am working"), "Slide 6: chỉ dịch hàng/cột tiêu đề bảng ngữ pháp");
+  assert.ok(s7.includes("(肯定文)") && s7.includes("(否定文)"), "Slide 7: dịch Positive / Negative trong thanh tiêu đề bảng");
+
+  // Slide 9: Cyan heading + Formula + Examples label ONLY; skip We use..., It gives..., and 🔹 sentences
+  const s9 = await slideXml(9);
+  assert.ok(s9.includes("JA:Using 「Always」 in Present Continuous for Annoyance"), "Slide 9: dịch tiêu đề cyan & giữ 「Always」");
+  assert.ok(s9.includes("(公式)") && s9.includes("(例文)"), "Slide 9: dịch Formula (公式) & Examples (例文)");
+  assert.ok(!s9.includes("JA:We use") && !s9.includes("JA:It gives"), "Slide 9: lược bỏ giải thích 'We use...' và 'It gives...'");
+  assert.ok(!s9.includes("JA:🔹"), "Slide 9: lược bỏ các câu ví dụ có biểu tượng 🔹");
+
+  // Slides 11, 12, 13, 16: Pruned grids/chips/phrases/forms matching real slide order
+  const s11 = await slideXml(11);
+  const s12 = await slideXml(12);
+  const s13 = await slideXml(13);
+  const s16 = await slideXml(16);
+  assert.ok(!s11.includes("JA:Thanks") && !s11.includes("ありがとうございました"), "Slide 11: lược bỏ word-bank chip 'Thanks'");
+  assert.ok(s12.includes("JA:Look at the dialogue again") && !s12.includes("JA:Starting/Answering") && !s12.includes("JA:Teresa Baum"), "Slide 12: dịch hướng dẫn Exercise 2 nhưng lược bỏ 6 tiêu đề cột & thẻ hội thoại");
+  assert.ok(s13.includes("基本表現：職場での電話"), "Slide 13: dịch tiêu đề Key expressions: A phone call at work");
+  assert.ok(!s13.includes("Starting/Answering a call (") && !s13.includes("JA:Starting/Answering"), "Slide 13: lược bỏ 6 tiêu đề cột 3x2");
+  assert.ok(!s13.includes("JA:Hello") && !s13.includes("JA:✓"), "Slide 13: lược bỏ toàn bộ cụm Key expressions");
+  assert.ok(s16.includes("JA:Make a dialogue") && !s16.includes("JA:Message for") && !s16.includes("JA:Call back"), "Slide 16: dịch hướng dẫn nhưng lược bỏ nhãn form Message / Call back? Urgent?");
+
+  // Slide 17: Did you know ? + all 3 body paragraphs incl. trailing 📞
+  const s17 = await slideXml(17);
+  assert.ok(s17.includes("(ご存知ですか？)"), "Slide 17: dịch 'Did you know ?'");
+  assert.ok(s17.includes("JA:") && s17.includes("leaving a message!"), "Slide 17: giữ & dịch đủ 3 đoạn kể cả đoạn kết thúc bằng 📞");
+
+  // Slide 19: Only top title & instruction, SKIP 6 matching cards
+  const s19 = await slideXml(19);
+  assert.ok(s19.includes("現在進行形の用法") && s19.includes("JA:Read and match"), "Slide 19: dịch tiêu đề + hướng dẫn");
+  assert.ok(!s19.includes("JA:To describe") && !s19.includes("JA:The company is doing"), "Slide 19: lược bỏ toàn bộ 6 thẻ ghép đôi");
+
+  // Slide 20: Making a survey! + all 4 lines
+  const s20 = await slideXml(20);
+  assert.ok(s20.includes("(アンケート調査をしましょう！)") && s20.includes("JA:Work in pairs"), "Slide 20: dịch 'Making a survey!' & các dòng hướng dẫn");
+
+  // Slides 22, 23, 24: Wrap-up & THANKS -> 0 translations and 0 warnings
+  for (const n of [22, 23, 24]) {
+    const sx = await slideXml(n);
+    assert.ok(!sx.includes('descr="sl:ja"'), `Slide ${n}: không được chèn bất kỳ bản dịch nào`);
+    assert.ok(!sx.includes("JA:") && !sx.includes("ありがとうございました") && !sx.includes("まとめ"), `Slide ${n}: không dịch Wrap-up / Assignment / THANKS`);
+    const hasEmptyWarn = out.report.warnings.some(w => w.number === n && w.text.includes("Chưa nhận diện"));
+    assert.ok(!hasEmptyWarn, `Slide ${n}: không được phát sinh cảnh báo 'Chưa nhận diện được nội dung cần dịch'`);
+  }
+
+  // Strict 3-color audit across ALL translated runs in ALL 24 slides
+  const ALLOWED_COLORS = new Set(["000000", "FFFFFF", "1D4ED8"]);
+  const badColors = [];
+  for (let n = 1; n <= 24; n++) {
+    const doc = new slEnv.DOMParser().parseFromString(await slideXml(n), "application/xml");
+    const runs = Array.from(doc.getElementsByTagNameNS(A, "r"));
+    for (const r of runs) {
+      const rPr = r.getElementsByTagNameNS(A, "rPr")[0];
+      if (!rPr || rPr.getAttribute("lang") !== "ja-JP") continue;
+      // Only check newly injected bilingual runs (they carry our target accent srgbClr + Yu Gothic)
+      const ea = rPr.getElementsByTagNameNS(A, "ea")[0]?.getAttribute("typeface");
+      if (ea !== "Yu Gothic") continue;
+      const val = rPr.getElementsByTagNameNS(A, "srgbClr")[0]?.getAttribute("val");
+      if (!ALLOWED_COLORS.has(val)) {
+        badColors.push(`Slide ${n} "${r.textContent.trim().slice(0, 40)}" -> ${val}`);
+      }
+    }
+  }
+  assert.deepEqual(badColors, [], `Mọi chữ dịch phải strictly dùng 000000 / FFFFFF / 1D4ED8, phát hiện màu lạ: ${badColors.join("; ")}`);
+
+  // Verify Section Dividers (Slide 5, 10, 14, 18) & Slide 4 cover got FFFFFF White
+  for (const n of [4, 5, 10, 14, 18]) {
+    const doc = new slEnv.DOMParser().parseFromString(await slideXml(n), "application/xml");
+    const trColors = Array.from(doc.getElementsByTagNameNS(A, "r"))
+      .filter(r => r.getElementsByTagNameNS(A, "rPr")[0]?.getAttribute("lang") === "ja-JP" && r.getElementsByTagNameNS(A, "ea")[0]?.getAttribute("typeface") === "Yu Gothic")
+      .map(r => r.getElementsByTagNameNS(A, "srgbClr")[0]?.getAttribute("val"));
+    assert.ok(trColors.length > 0 && trColors.every(c => c === "FFFFFF"), `Slide ${n} (nền tối/divider) phải dùng chữ dịch Trắng FFFFFF, thực tế: [${trColors.join(",")}]`);
   }
 });
 
