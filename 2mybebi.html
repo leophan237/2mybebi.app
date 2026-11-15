@@ -1870,8 +1870,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 globalThis.DocSecurity = (() => {
   const MAX_ZIP_ENTRIES = 6000;
-  const MAX_ENTRY_BYTES = 250 * 1024 * 1024;
-  const MAX_TOTAL_BYTES = 350 * 1024 * 1024;
+  const MAX_ENTRY_BYTES = 600 * 1024 * 1024;
+  const MAX_TOTAL_BYTES = 1800 * 1024 * 1024;
   const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
 
   const FORBIDDEN_ZIP_RE = /(?:^|\/)(?:vbaProject\.bin|vbaData\.xml|activeX\/|embeddings\/|_xmlsignatures\/)|(?:\.(?:exe|dll|bat|cmd|ps1|psm1|vbs|vbe|js|jse|wsf|wsh|hta|lnk|scr|msi|msp|com|pif|reg|ocx))$/i;
@@ -1959,7 +1959,7 @@ globalThis.DocSecurity = (() => {
     return null;
   }
 
-  function inspectZipDirectory(buffer, maxFileBytes = 60 * 1024 * 1024, requiredEntries = []) {
+  function inspectZipDirectory(buffer, maxFileBytes = 600 * 1024 * 1024, requiredEntries = []) {
     if (!buffer || !(buffer.byteLength > 22)) throw Error("Tệp không có cấu trúc ZIP hợp lệ.");
     if (buffer.byteLength > maxFileBytes) throw Error(`Tệp vượt giới hạn ${Math.round(maxFileBytes / (1024 * 1024))} MB.`);
     const v = new DataView(buffer);
@@ -2099,7 +2099,7 @@ globalThis.SlideLingo = (() => {
   const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
   const PT = 12700;
   const MB = 1024 * 1024;
-  const MAX_FILE = 60 * MB;
+  const MAX_FILE = 600 * MB;
   const decoder = new TextDecoder("utf-8", { fatal: true });
   const parser = new DOMParser();
   const serializer = new XMLSerializer();
@@ -2258,10 +2258,10 @@ globalThis.SlideLingo = (() => {
     return children(body, A, "p").map(paraText).filter(Boolean);
   }
 
-  const heading = /^(?:\d+[.)]\s*)?(?:(?:unit|lesson|chapter)\s*\d+\b|vocabulary\b|pronunciation\b|grammar\b|objectives?\b|practice\b|warm[- ]?up\b|extra practice\b|reflection\b|self[- ]reflection\b|learning goals?\b|fun facts?\b|role[- ]?play\b|before project\b|during project\b|after project\b|conversation(?:\s+activator)?\b|pair\s*work\b|group\s*work\b|individual\s*work\b|key\s*expressions?\b|useful\s*(?:expressions?|phrases?|language)\b|creative\s*speaking(?:\s*practice)?\b|speaking(?:\s*practice)?\b|listening(?:\s*practice)?\b|reading(?:\s*practice)?\b|writing(?:\s*practice)?\b|communication\b|discussion\b|scenario\b|situation\b|exercise\s*\d*\b|activity\s*\d*\b|task\s*\d*\b|language\s*(?:focus|notes?)\b)/i;
+  const heading = /^(?:\d+[.)]\s*)?(?:(?:unit|lesson|chapter)\s*\d+\b|vocabulary\b|pronunciation\b|grammar\b|objectives?\b|practice\b|warm[- ]?up\b|wrap[- ]?up\b|extra practice\b|reflection\b|self[- ]reflection\b|learning goals?\b|fun facts?\b|role[- ]?play\b|before project\b|during project\b|after project\b|conversation(?:\s+activator)?\b|pair\s*work\b|group\s*work\b|individual\s*work\b|key\s*(?:expressions?|points?|takeaways?)\b|takeaways?\b|useful\s*(?:expressions?|phrases?|language)\b|creative\s*speaking(?:\s*practice)?\b|speaking(?:\s*practice)?\b|listening(?:\s*practice)?\b|reading(?:\s*practice)?\b|writing(?:\s*practice)?\b|communication\b|discussion\b|scenario\b|situation\b|exercise\s*\d*\b|activity\s*\d*\b|task\s*\d*\b|language\s*(?:focus|notes?)\b|review\b|summary\b|homework\b|assignment\b|tips?\b|reminders?\b|check[- ]?list\b)/i;
   const directions = /^(?:activity\s*\d+\s*[:.]\s*|(?:instructions?|directions|task|step)\s*\d*\s*[:.]\s*)?(?:read|reading|listen|watch|look|choose|match|complete|fill|order|reorder|arrange|work|use|put|make|making|give|create|form|build|take|change|turn|switch|swap|rewrite|unscramble|categorize|classify|sort|brainstorm|describe|introduce|explain|identify|name|list|tell|discuss|say|ask|answer|write|mark|circle|underline|repeat|practice|practise|role[- ]play|check|decide|find|select|compare|reflect|think about|talk|guess|label|share|present|prepare|imagine|suppose|pretend|aim|expect|focus|agree|propose|suggest|negotiate|confirm|schedule|review|reach|offer|respond|greet|thank|apologize|decline|accept|lead|manage|handle|solve|resolve|prioritize|summarize|outline|highlight|encourage|convince|persuade|clarify|express)\b/i;
   const explicit = /^(?:instructions?|directions|scenario|situation|context|learning objectives?|your (?:task|role|plans?|goal|aim|job)\b|you are\b|work (?:in|with)\b|in (?:pairs?|groups?)\b|pair\s*work\b|group\s*work\b|key\s*expressions?\b|useful\s*(?:expressions?|phrases?|language)\b|in this (?:conversation|dialogue|lesson|activity|exercise|part|section|unit|table|chart)|today you will|by the end|(?:then\s+)?let[’']s|you (?:should|can|will|need to|must)\b|make sure (?:you )?(?:can|to)?\b|remember to\b|don[’']t forget to\b|be ready to\b|prepare to\b|are there any (?:words|questions)|below is the list|origin of the word|follow(?:ing)? the pattern|use the pattern|each (?:student|pair|group|team|person|partner|player)|student [ab12]\b|one student\b|partner [ab12]\b|the (?:interviewer|interviewee|speaker|listener|caller|receiver|student|partner|player)\s+(?:asks?|answers?|writes?|reads?|says?|listens?|takes?|chooses?|checks?|rolls?|moves?|makes?)\b|then\s+(?:swap|switch|change|share|present|ask|answer))/i;
-  const teacher = /^(?:teacher\b|notes?\s*:|answer key\b|possible answer\b|transcript\b|script\b)/i;
+  const teacher = /^(?:teacher\b|note\s*:\s*these\s+slides\b|(?:teacher|instructor|author)(?:'s)?\s+notes?\s*:|answer key\b|possible answer\b|transcript\b|script\b)/i;
   const examplePrefix = /^(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF🔹💡📌📞•\-–—]+\s*)?(?:examples?|sample\s+answers?|models?|e\.g\.)\s*[:.]\s*/iu;
   const answer = /^(?:[A-Z]\s*:|(?:correct answers?|answers?)\s*:|\d+[.)]\s+_{2,})|_{2,}|^(?!pronunciation\b|rule\b|sound\b).*\/(?:[^/]*[ˈˌəɪʃʊɔŋæɑɜɒʌθðʒʤʧ][^/]*)\//i;
   const purpose = /(?:\b(?:the|these|each|below|correct|your|sentence|words?|sentences?|phrases?|dialogues?|conversations?|pictures?|photos?|images?|passage|text|chart|box|list|company|type|pattern|structure|example|class|pairs?|group|team|blanks?|audio|video|table|activity|partners?|questions?|responses?|answers?|roles?|survey|role[- ]play|where|what|who|when|how|why)\b|[.!]$)/i;
@@ -2277,10 +2277,16 @@ globalThis.SlideLingo = (() => {
   const formulaLineRe = /^(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF🔹💡📌📞•\-–—]+\s*)?(formula|form|structure)\s*:\s*(.+)$/iu;
   const sectionTopicLineRe = /^(?:vocabulary(?:\s+recap|\s+extension)?|grammar(?:\s+recap|\s+extension)?|pronunciation(?:\s+recap|\s+extension)?|business\s+communication|speaking|listening|reading|writing)\s*:\s*\S/i;
   const numberedConceptRe = /^(?:\d+[.)]\s*|[•\-–—]\s*)?(?:intonation|stress|word\s+stress|sentence\s+stress|rising\s+intonation|falling\s+intonation|linking|connected\s+speech|present\s+continuous|present\s+simple|past\s+simple|future)[^:]{0,35}:\s+\S/i;
+  const grammarExplanationRe = /^(?:we\s+(?:use|can\s+use|often\s+use|always\s+use|form|make)\b|it\s+(?:gives|shows|means|expresses|describes|is\s+used|refers|helps|indicates)\b|this\s+(?:tense|form|structure|expression|pattern|phrase|rule|shows|means|is\s+used)\b|use\s+(?:the\s+)?(?:present|past|future|[a-z]+\s+tense)\b|used\s+(?:to\s+(?:talk|describe|express|show|ask|indicate)|for\s+(?:talking|describing|expressing|actions|things))\b|in\s+(?:english|business|spoken\s+english|written\s+english|formal|informal)\b|(?:rising|falling)\s+intonation\s+(?:is|shows)\b|(?:word|sentence)\s+stress\s+(?:is|falls|helps)\b|(?:these|this)\s+(?:words?|verbs?|phrases?|expressions?)\s+(?:are|is)\s+(?:used|often|usually)\b)/i;
+  const reviewNoteRe = /^(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF🔹💡📌⚠️📝✓✔•\-–—]+\s*)?(?:(?:important\s+|quick\s+)?(?:notes?|tips?)|remember|be\s+careful|careful|warning|caution|attention|(?:self[- ]?)?correction|review|summary|wrap[- ]?up|key\s+(?:points?|takeaways?)|takeaways?|reminder|check[- ]?list|checklist|hints?|recap|fix(?:\s+the\s+mistake)?)\s*:\s*\S/iu;
+  const reviewSentenceRe = /^(?:in\s+today['’]s\s+lesson\b|today\s+we\s+(?:learned|practiced|practised|studied|reviewed|covered)\b|by\s+(?:now|the\s+end)\b|you\s+(?:have\s+learned|can\s+now|studied|learned)\b|i\s+can\s+(?:now\s+)?(?:use|make|ask|answer|talk|introduce|explain|understand|identify|describe|write|read|listen|speak)\b|let['’]s\s+review\b|remember\s+to\b|don['’]t\s+forget\s+to\b|be\s+careful\s+(?:with|not\s+to|when)\b|make\s+sure\s+(?:you|to)\b|be\s+sure\s+to\b|pay\s+attention\s+to\b|watch\s+out\s+for\b|check\s+your\b|correct\s+(?:the|any|each)\b|find\s+and\s+correct\b|homework\s*:|assignment\s*:)/iu;
 
   const GLOSSARY = {
     ja: {
       "warm-up": "ウォームアップ", "warm up": "ウォームアップ",
+      "wrap-up": "まとめ", "wrap up": "まとめ", "wrap-up & assignment": "まとめと課題",
+      "review": "復習", "summary": "まとめ", "homework": "宿題", "assignment": "課題",
+      "tips": "ヒント", "tip": "ヒント", "important note": "重要な注意", "remember": "ポイント", "be careful": "注意", "correction": "訂正",
       "extra practice": "追加練習", "pre-project": "プレプロジェクト", "post - project": "ポストプロジェクト", "post-project": "ポストプロジェクト",
       "project": "プロジェクト", "projects": "プロジェクト", "practice": "練習", "check-list": "チェックリスト", "checklist": "チェックリスト",
       "objectives": "学習目標", "learning objectives": "学習目標", "task and objectives": "タスクと目標", "task": "タスク",
@@ -2308,7 +2314,11 @@ globalThis.SlideLingo = (() => {
       "your plans are to:": "計画：", "your plans are to": "計画",
     },
     vi: {
-      "warm-up": "Khởi động", "warm up": "Khởi động", "extra practice": "Luyện tập thêm",
+      "warm-up": "Khởi động", "warm up": "Khởi động",
+      "wrap-up": "Tổng kết", "wrap up": "Tổng kết", "wrap-up & assignment": "Tổng kết & Bài tập về nhà",
+      "review": "Ôn tập", "summary": "Tóm tắt", "homework": "Bài tập về nhà", "assignment": "Bài tập",
+      "tips": "Mẹo", "tip": "Mẹo", "important note": "Lưu ý quan trọng", "remember": "Ghi nhớ", "be careful": "Cẩn thận", "correction": "Đính chính",
+      "extra practice": "Luyện tập thêm",
       "pre-project": "Trước dự án", "post - project": "Sau dự án", "post-project": "Sau dự án", "project": "Dự án", "projects": "Dự án",
       "practice": "Luyện tập", "check-list": "Danh sách kiểm tra", "checklist": "Danh sách kiểm tra",
       "objectives": "Mục tiêu", "learning objectives": "Mục tiêu học tập", "task and objectives": "Nhiệm vụ và mục tiêu", "task": "Nhiệm vụ",
@@ -2419,15 +2429,56 @@ globalThis.SlideLingo = (() => {
     }
     // Dọn các đoạn <a:p> rỗng thừa ở cuối hộp văn bản (tránh làm tăng chiều cao ảo của hộp chữ)
     const allP = children(body, A, "p");
-    const hasNonEmpty = allP.some(p => clean(descendants(p, A, "t").map(t => t.textContent).join("")).length > 0);
+    const pText = p => clean(descendants(p, A, "t").map(t => t.textContent).join(""));
+    const isEmptyP = p => !pText(p) && !descendants(p, A, "fld").length;
+    const hasNonEmpty = allP.some(p => pText(p).length > 0);
     if (hasNonEmpty && allP.length > 1) {
       for (let i = allP.length - 1; i >= 1; i--) {
         const p = allP[i];
-        const txt = clean(descendants(p, A, "t").map(t => t.textContent).join(""));
-        if (!txt && !descendants(p, A, "fld").length) {
+        if (isEmptyP(p)) {
           body.removeChild(p);
         } else {
           break;
+        }
+      }
+      // Gộp các đoạn <a:p> rỗng nằm xen giữa hai đoạn có chữ thành khoảng đệm gọn spcBef=4pt
+      // (tránh hộp chữ giãn đôi chiều cao như Slide 9; không động vào bài điền từ ___ hoặc hội thoại A:/B:)
+      const remainP = children(body, A, "p");
+      const joinedText = remainP.map(pText).filter(Boolean).join("\n");
+      if (remainP.length >= 3 && !/_{3,}|^\s*[A-F]\s*:/m.test(joinedText)) {
+        const PPR_ORDER_AFTER_SPACING = new Set([
+          "spcAft", "buClrTx", "buClr", "buSzTx", "buSzPct", "buSzPts",
+          "buFontTx", "buFont", "buNone", "buAutoNum", "buChar", "buBlip",
+          "tabLst", "defRPr", "extLst"
+        ]);
+        const firstIdx = remainP.findIndex(p => !isEmptyP(p));
+        let lastIdx = -1;
+        for (let i = remainP.length - 1; i >= 0; i--) {
+          if (!isEmptyP(remainP[i])) { lastIdx = i; break; }
+        }
+        if (firstIdx >= 0 && lastIdx > firstIdx + 1) {
+          let collapsedGap = false;
+          for (let i = firstIdx + 1; i <= lastIdx; i++) {
+            const p = remainP[i];
+            if (isEmptyP(p)) {
+              body.removeChild(p);
+              collapsedGap = true;
+            } else if (collapsedGap) {
+              let pPr = child(p, A, "pPr");
+              if (!pPr) {
+                pPr = doc.createElementNS(A, "a:pPr");
+                p.insertBefore(pPr, p.firstChild);
+              }
+              if (!child(pPr, A, "spcBef")) {
+                const spcBef = doc.createElementNS(A, "a:spcBef");
+                const spcPts = doc.createElementNS(A, "a:spcPts");
+                spcPts.setAttribute("val", "400");
+                spcBef.appendChild(spcPts);
+                insertSchemaOrdered(pPr, spcBef, PPR_ORDER_AFTER_SPACING);
+              }
+              collapsedGap = false;
+            }
+          }
         }
       }
     }
@@ -2442,7 +2493,9 @@ globalThis.SlideLingo = (() => {
     const isTopBar = !rect || (rect.y < H * 0.105 && rect.y + rect.h <= H * 0.135);
     if (isTopBar && paragraphs.length <= 2 && breadcrumbRe.test(full)) return true;
     if (rect && rect.y < H * 0.075 && rect.y + rect.h <= H * 0.12) {
-      if (/^(?:unit|lesson|module|chapter|exercise|vocabulary|grammar(?:\s+recap)?|business\s+communication|creative\s+speaking(?:\s+practice)?|warm[- ]?up|wrap[- ]?up|practice|part|section|review|recap|extra\s+practice|fun\s+facts?)\b/i.test(full) && !/[.?!]$/.test(full)) return true;
+      const maxSz = Math.max(0, ...descendants(node, A, "rPr").map(r => Number(r.getAttribute("sz")) || 0));
+      const isLargeSectionHeading = maxSz >= 2200 && !/^(?:unit|lesson|module|chapter|exercise|part|section)\s*\d*$/i.test(full);
+      if (!isLargeSectionHeading && /^(?:unit|lesson|module|chapter|exercise|vocabulary|grammar(?:\s+recap)?|business\s+communication|creative\s+speaking(?:\s+practice)?|warm[- ]?up|wrap[- ]?up|practice|part|section|review|recap|extra\s+practice|fun\s+facts?)\b/i.test(full) && !/[.?!]$/.test(full)) return true;
       if (rect.x > W * 0.82 && full.length <= 20) return true;
     }
     return false;
@@ -2485,6 +2538,17 @@ globalThis.SlideLingo = (() => {
     return false;
   }
 
+  function isTheoryOrReviewLine(text) {
+    const t = String(text || "").trim();
+    if (!t || /^\s*🔹/u.test(t) || /_{2,}/.test(t)) return false;
+    return grammarExplanationRe.test(t) ||
+      reviewNoteRe.test(t) ||
+      reviewSentenceRe.test(t) ||
+      directions.test(t) ||
+      explicit.test(t) ||
+      /\b(?:tense|verb|subject|object|auxiliary|continuous|simple|participle|grammar|intonation|stress|clause|formula|rule|usage|used (?:to|for)|gives the idea|annoying|frustration|complaining|mistake|error|avoid|correct(?:ion)?|remember|forget|summary|review|homework|assignment)\b/i.test(t);
+  }
+
   function classifyParagraph(text, pIndex, totalParas, node, context, hasPrimaryInstruction, boxIsExampleBlock) {
     if (!text || hasTargetScript(text)) return null;
 
@@ -2495,7 +2559,7 @@ globalThis.SlideLingo = (() => {
         .replace(/^[\u{1F300}-\u{1FAFF}\u2600-\u27BF🔹💡📌📞•\-–—\s]+/u, "")
         .replace(/\s*[:.]\s*$/, "")
         .trim();
-      return { mode: "INLINE_LABEL_PAREN", sourceText: labelOnly, isExample: true };
+      return { mode: "INLINE_LABEL_PAREN", sourceText: labelOnly, isExample: true, mustTranslate: true, semanticRole: "label" };
     }
 
     if (boxIsExampleBlock || (context.grammar && /^\s*🔹/u.test(text))) {
@@ -2505,12 +2569,24 @@ globalThis.SlideLingo = (() => {
     // 1b. Dòng công thức ngữ pháp "💡 Formula: Subject + am/ is/ are + always + V-ing + object." -> chỉ dịch nhãn "Formula (公式):"
     const formulaMatch = text.match(formulaLineRe);
     if (formulaMatch && /\+/.test(formulaMatch[2])) {
-      return { mode: "INLINE_LABEL_PAREN", sourceText: formulaMatch[1].trim() };
+      return { mode: "INLINE_LABEL_PAREN", sourceText: formulaMatch[1].trim(), mustTranslate: true, semanticRole: "label" };
+    }
+
+    // 1c. Nhóm 5: Ghi chú/lưu ý/đính chính/nhắc nhở ("Note:", "Tip:", "Remember:", "Be careful:", "Correction:", "Review:", "Wrap-up:")
+    if (
+      !context.isPhoneForm &&
+      !teacher.test(text) &&
+      !/_{3,}/.test(text) &&
+      /[A-Za-z]{3}/.test(text) &&
+      text.length <= 480 &&
+      reviewNoteRe.test(text)
+    ) {
+      return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "review", forceNewline: true };
     }
 
     // 2. Câu hướng dẫn có chứa mẫu câu trong ngoặc kép / [placeholder] — luôn giữ nguyên câu gốc và đặt bản dịch xuống dòng dưới
     if (hasProtectedPattern(text) && !teacher.test(text) && text.length <= 500) {
-      return { mode: "HYBRID_NEWLINE", sourceText: text, hasPattern: true };
+      return { mode: "HYBRID_NEWLINE", sourceText: text, hasPattern: true, mustTranslate: true, semanticRole: "instruction" };
     }
 
     if (!eligible(text) || text.length > 480) return null;
@@ -2520,6 +2596,11 @@ globalThis.SlideLingo = (() => {
     const bodyEl = child(node, P, "txBody") || child(node, A, "txBody");
     const runs = descendants(bodyEl, A, "rPr");
     const isLarge = runs.some(r => Number(r.getAttribute("sz")) >= 2700);
+    const isTopBoldHeader = Boolean(
+      context.inTopHeaderZone &&
+      totalParas <= 2 &&
+      runs.some(r => Number(r.getAttribute("sz")) >= 1800 && r.getAttribute("b") === "1")
+    );
     const pNodes = children(bodyEl, A, "p");
     const pNode = pNodes[pIndex];
     const algn = child(pNode, A, "pPr")?.getAttribute("algn");
@@ -2529,83 +2610,105 @@ globalThis.SlideLingo = (() => {
     // 2b. Tiêu đề UNIT X: TOPIC trên slide bìa (ví dụ "UNIT 2: COMPANY" -> "UNIT 2: COMPANY (会社)")
     const unitMatch = text.match(/^unit\s*\d+\s*:\s*(.+)$/i);
     if (unitMatch && context.cover) {
-      return { mode: "INLINE_APPEND", paren: true, sourceText: unitMatch[1].trim(), ratio: RF.transRatio };
+      return { mode: "INLINE_APPEND", paren: true, sourceText: unitMatch[1].trim(), ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
     }
 
     // 2c. Nhãn "Objectives:" -> "Objectives (学習目標):"
     if (/^(?:learning\s+)?objectives?\s*:$/i.test(text)) {
-      return { mode: "INLINE_LABEL_PAREN", sourceText: text.replace(/\s*:\s*$/, "").trim(), ratio: RF.transRatio };
+      return { mode: "INLINE_LABEL_PAREN", sourceText: text.replace(/\s*:\s*$/, "").trim(), ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
     }
 
     // 3. Tiêu đề Slide / Cover — luôn xuống dòng, bản dịch nhỏ hơn theo thứ bậc chữ
     if (
-      (isTitle || isLarge) &&
+      (isTitle || isLarge || isTopBoldHeader) &&
       text.length <= 120 &&
       totalParas <= 3 &&
+      !isMonolingualDialogueOrDrill(text) &&
       (
         isGlossaryHeading(text) ||
         context.cover ||
         heading.test(text) ||
-        /^(?:form of|use of|structure of|usage of|key expressions|using .+ (?:tense|for|to)|(?:present|past|future)\s+(?:continuous|simple|perfect))/i.test(text)
+        /^(?:form of|use of|structure of|usage of|key expressions|using\s+(?:"[^"]+"|[^\s]{2,})\s+(?:tense|for|to|in)\b|(?:present|past|future)\s+(?:continuous|simple|perfect))/i.test(text) ||
+        isTopBoldHeader
       ) &&
       !/\s[?!].+/.test(text)
     ) {
       const maxSz = Math.max(0, ...runs.map(r => Number(r.getAttribute("sz")) || 0));
       const ratio = maxSz >= 3600 || (!maxSz && isTitle) ? RF.titleRatioXL : maxSz >= 2400 ? RF.titleRatioL : RF.transRatio;
-      return { mode: "NEWLINE_AFTER", sourceText: text, ratio, forceNewline: true };
+      return { mode: "NEWLINE_AFTER", sourceText: text, ratio, mustTranslate: true, semanticRole: "heading", forceNewline: true };
     }
 
     // 3b. Tiêu đề hoạt động/chuyên mục nằm trong GLOSSARY (Asking questions, Did you know ?, Making a survey!, Form of Present Continuous Tense…)
     if (isGlossaryHeading(text)) {
       if (/^(?:form of|use of|structure of|usage of|key expressions\s*:)/i.test(text)) {
-        return { mode: "NEWLINE_AFTER", sourceText: text, ratio: RF.transRatio, forceNewline: true };
+        return { mode: "NEWLINE_AFTER", sourceText: text, ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading", forceNewline: true };
       }
       const useParen = /[?!]\s*$/.test(text);
-      return { mode: "INLINE_APPEND", paren: useParen, sourceText: text, ratio: RF.transRatio };
+      return { mode: "INLINE_APPEND", paren: useParen, sourceText: text, ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
     }
 
     // 4. Tiêu đề chuyên mục ngữ pháp / Key expressions / Did you know / Mục tiêu / Fun facts
-    if (/^(?:form of|use of|structure of|usage of|key expressions|using .+ (?:tense|for|to)|(?:present|past|future)\s+(?:continuous|simple|perfect)(?:\s+tense)?\s*:)/i.test(text)) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, forceNewline: true };
+    if (/^(?:form of|use of|structure of|usage of|key expressions|using .+ (?:tense|for|to|in|annoyance)|(?:present|past|future)\s+(?:continuous|simple|perfect)(?:\s+tense)?\s*:)/i.test(text)) {
+      return { mode: "NEWLINE_AFTER", sourceText: text, mustTranslate: true, semanticRole: "heading", forceNewline: true };
     }
     if (/^did you know\s*\??$/i.test(text)) {
-      return { mode: "INLINE_APPEND", paren: true, sourceText: "Did you know?" };
+      return { mode: "INLINE_APPEND", paren: true, sourceText: "Did you know?", mustTranslate: true, semanticRole: "heading" };
     }
     if (sectionTopicLineRe.test(text)) {
-      return { mode: "NEWLINE_AFTER", sourceText: stripEmbeddedVietnameseGloss(text) };
+      return { mode: "NEWLINE_AFTER", sourceText: stripEmbeddedVietnameseGloss(text), mustTranslate: true, semanticRole: "heading" };
     }
     if (numberedConceptRe.test(text)) {
       const cleaned = stripEmbeddedVietnameseGloss(text).replace(/^[•\-–—]\s*/, "").trim();
-      return { mode: "NEWLINE_AFTER", sourceText: cleaned };
+      return { mode: "NEWLINE_AFTER", sourceText: cleaned, mustTranslate: true, semanticRole: "instruction" };
     }
     if (context.stress && /^rule\s*:/i.test(text)) {
-      return { mode: "INLINE_APPEND", sourceText: text };
+      return { mode: "INLINE_APPEND", sourceText: text, mustTranslate: true, semanticRole: "instruction" };
     }
-    if ((context.objectives || context.isObjectivesList) && (
+
+    // 4b. Nhóm 2: Nội dung giải thích lý thuyết / ngữ pháp ("We use...", "It gives...", "This tense...")
+    if (
+      grammarExplanationRe.test(text) &&
+      !context.matchingExercise &&
+      !isMonolingualDialogueOrDrill(text) &&
+      text.length <= 360
+    ) {
+      return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
+    }
+
+    // 4c. Nhóm 5: Câu review / đính chính / lưu ý không có dấu hai chấm ("In today's lesson...", "Remember to...")
+    if (
+      reviewSentenceRe.test(text) &&
+      !context.matchingExercise &&
+      !isMonolingualDialogueOrDrill(text)
+    ) {
+      return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "review", forceNewline: true };
+    }
+
+    if ((context.objectives || context.isObjectivesList || ((context.review || context.isReviewList) && !context.matchingExercise)) && !isMonolingualDialogueOrDrill(text) && (
       /^(?:recall|remember|apply|master|develop|build|introduce|describe|identify|explain|recognize|understand|distinguish|communicate|demonstrate|talk about|ask and answer|use|practice|practise|learn|review|create|make|form|write|read|listen|speak|role[- ]?play|exchange|conduct|handle|respond|give|take|express|produce)\b/i.test(text) ||
-      (context.isObjectivesList && wc >= 3)
+      ((context.isObjectivesList || context.isReviewList) && wc >= 3)
     )) {
       return text.length <= 95
-        ? { mode: "INLINE_APPEND", paren: true, sourceText: text }
-        : { mode: "NEWLINE_AFTER", sourceText: text };
+        ? { mode: "INLINE_APPEND", paren: true, sourceText: text, mustTranslate: true, semanticRole: context.review ? "review" : "instruction" }
+        : { mode: "NEWLINE_AFTER", sourceText: text, mustTranslate: true, semanticRole: context.review ? "review" : "instruction" };
     }
     if (context.background && (
       /^(?:did you know|in latin|so,|this shows|the phrase|however,|in japan,)\b/i.test(text) ||
       (wc >= 5 && /[.!?:](?:\s*[\u{1F300}-\u{1FAFF}\u2600-\u27BF]+)*\s*$/u.test(text))
     )) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, forceNewline: true };
+      return { mode: "NEWLINE_AFTER", sourceText: text, mustTranslate: true, semanticRole: "instruction", forceNewline: true };
     }
     if (context.explainVocab && /^(?:someone|somebody|a person|people|one or a group|a place|a process|the act|a type|a company|a business|an organization|something|the ability|to\s+[a-z]{3,})\b/i.test(text)) {
-      return { mode: "NEWLINE_AFTER", sourceText: text };
+      return { mode: "NEWLINE_AFTER", sourceText: text, mustTranslate: true, semanticRole: "instruction" };
     }
     if (explicit.test(text) && text.length <= 320) {
       if (/^(?:scenario|your plans are to)\s*:/i.test(text) && text.length <= 75) {
-        return { mode: "INLINE_APPEND", sourceText: text };
+        return { mode: "INLINE_APPEND", sourceText: text, mustTranslate: true, semanticRole: "prompt" };
       }
       if (isCentered || (pIndex >= 1 && hasPrimaryInstruction) || wc >= 6 || /^instructions?\s*:/i.test(text)) {
-        return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), forceNewline: true };
+        return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
       }
-      return { mode: "INLINE_APPEND", sourceText: text };
+      return { mode: "INLINE_APPEND", sourceText: text, mustTranslate: true, semanticRole: "prompt" };
     }
 
     // 5. Câu lệnh hướng dẫn bài tập (Directions) hoặc câu phụ nằm trong cùng khung hướng dẫn
@@ -2618,22 +2721,23 @@ globalThis.SlideLingo = (() => {
       }
       if (validDirection) {
         if (isCentered || (pIndex >= 1 && hasPrimaryInstruction) || wc >= 5 || text.length >= 45) {
-          return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), forceNewline: true };
+          return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
         }
-        return { mode: "INLINE_APPEND", sourceText: text };
+        return { mode: "INLINE_APPEND", sourceText: text, mustTranslate: true, semanticRole: "instruction" };
       }
     }
 
-    // 6. Câu giải thích/hướng dẫn phụ (pIndex >= 1) nằm ngay trong cùng hộp văn bản hướng dẫn (tránh văn bản ngữ pháp Slide 9)
+    // 6. Câu giải thích/hướng dẫn/review phụ (pIndex >= 1) nằm ngay trong cùng hộp văn bản
     if (
       pIndex >= 1 &&
       hasPrimaryInstruction &&
-      !context.grammar &&
+      !context.matchingExercise &&
       !isMonolingualDialogueOrDrill(text) &&
-      !/^\d+[.)]\s|^[A-D][.)]\s|^(?:we use|it (?:gives|shows|means|helps)|this (?:tense|form|structure)|e\.g\.|for example)\b/i.test(text) &&
+      (!context.grammar || isTheoryOrReviewLine(text)) &&
+      !/^(?:\d+[.)]\s|[A-D][.)]\s|e\.g\.|for example\b|🔹)/i.test(text) &&
       (/[.?!,;:]$/.test(text) || wc >= 4)
     ) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), forceNewline: true };
+      return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: context.review ? "review" : "instruction", forceNewline: true };
     }
 
     return null;
@@ -2641,19 +2745,14 @@ globalThis.SlideLingo = (() => {
 
   function isSkippedClosingOrWrapUpSlide(allTexts) {
     if (!Array.isArray(allTexts) || !allTexts.length) return false;
-    if (allTexts.some(t => breadcrumbRe.test(t) && /\|\s*(?:wrap[- ]?up(?:\s*&\s*assignment)?|summary|assignment)\s*$/i.test(t))) {
-      return true;
-    }
     const nonChrome = allTexts.filter(t => t && !brandChromeRe.test(t) && !breadcrumbRe.test(t));
     if (!nonChrome.length) return false;
     const joined = nonChrome.join(" ").replace(/\s+/g, " ").trim();
-    if (nonChrome.some(t => /^(?:wrap[- ]?up(?:\s*&\s*assignment)?|summary|homework(?:\s*&\s*assignment)?|assignment|in today['’]s lesson,?\s+we\s+(?:learned|can)|today['’]s summary)$/i.test(t))) {
-      return true;
+    // Chỉ bỏ qua slide kết thuần lời cảm ơn; các slide Wrap-up / Review / Summary / Assignment / Lưu ý đều được dịch
+    if (/\b(?:wrap[- ]?up|review|summary|in today['’]s lesson|remember|assignment|homework|notes?|tips?|takeaways?|correction)\b/i.test(joined)) {
+      return false;
     }
-    if (/\bwrap[- ]?up\b/i.test(joined) && /\bassignment\b/i.test(joined) && !/\b(?:listen|read|work in pairs|role[- ]?play|making a survey)\b/i.test(joined)) {
-      return true;
-    }
-    const isClosingThanks = nonChrome.some(t => /^(?:thank\s*you|thanks)[!.\s]*$/i.test(t) || /^do you have any questions\??$/i.test(t)) &&
+    const isClosingThanks = nonChrome.some(t => /^(?:thank\s*you|thanks|goodbye|bye)[!.\s]*$/i.test(t) || /^do you have any questions\??$/i.test(t)) &&
       nonChrome.every(t => t.split(/\s+/).length <= 12);
     return isClosingThanks;
   }
@@ -2790,6 +2889,9 @@ globalThis.SlideLingo = (() => {
       objectives: all.some(t => /^(?:learning\s+)?objectives?\s*:?$/i.test(t) || /^in today[’']s lesson\b/i.test(t)),
       background: all.some(t => /^(?:origin of the word|did you know\s*\??|fun\s+facts?\b)/i.test(t)),
       grammar: all.some(t => /^(?:using .+ (?:tense|for|to)|form of|use of|grammar\b|intonation\s*&\s*stress|present\s+continuous\s+tense\s*:)/i.test(t)),
+      matchingExercise: all.some(t => /\bread\s+and\s+match\b|\bmatch\s+(?:the\s+)?(?:uses?|sentences?|items?|columns?|words?)\b/i.test(t)),
+      review: all.some(t => /^(?:wrap[- ]?up(?:\s*&\s*assignment)?|review|summary|homework(?:\s*&\s*assignment)?|assignment|key\s+takeaways?|in\s+today['’]s\s+lesson\b|what\s+did\s+we\s+learn|self[- ]?(?:check|assessment|reflection))\b/i.test(t)),
+      isPhoneForm: all.some(t => /\bmessage\s+for\s*:|call\s+back\s*\?|urgent\s*\?/i.test(t)),
       explainVocab: all.some(t => /^vocabulary\s*:?$/i.test(t)) &&
         !all.some(t => /^\s*(?:read|choose|match|test|fill|check|look|say)\b/i.test(t)),
       trueFalse: all.some(t => /\btrue\s+(?:or|\/)\s+false\b/i.test(t)) ||
@@ -2863,9 +2965,14 @@ globalThis.SlideLingo = (() => {
         const full = nonEmpty.join(" ");
         const groupHasObjectives = node.parentNode?.localName === "grpSp" &&
           descendants(node.parentNode, P, "sp").some(s => extract(s).some(t => /^(?:learning\s+)?objectives?\s*:?$/i.test(t)));
+        const groupHasReview = node.parentNode?.localName === "grpSp" &&
+          descendants(node.parentNode, P, "sp").some(s => extract(s).some(t => /^(?:wrap[- ]?up|review|summary|key\s+takeaways?|homework|assignment|remember)\b/i.test(t)));
+        const inTopHeaderZone = Boolean(rect && rect.y < H * 0.22);
         const shapeContext = {
           ...baseContext,
+          inTopHeaderZone,
           isObjectivesList: groupHasObjectives || /^(?:learning\s+)?objectives?\s*:?$/i.test(nonEmpty[0]),
+          isReviewList: (groupHasReview || /^(?:wrap[- ]?up|review|summary|key\s+takeaways?|homework|assignment|remember)\b/i.test(nonEmpty[0])) && !baseContext.matchingExercise,
           stress: /\b(?:stress|grammar|pronunciation)\b/i.test(full) && nonEmpty.some(t => /^rule\s*:/i.test(t)),
         };
 
@@ -2873,7 +2980,6 @@ globalThis.SlideLingo = (() => {
         let boxHasPrimaryInstruction = /^(?:student|partner)\s+[ab12]\b|^scenario\b|^situation\b|^instructions?\s*:/i.test(nonEmpty[0]);
         let boxIsExampleBlock = false;
         const filledShape = isFilled(node);
-        const inTopHeaderZone = rect && rect.y < H * 0.22;
         for (let i = 0; i < pNodes.length; i++) {
           const t = pTexts[i];
           if (!t) continue;
@@ -2881,6 +2987,7 @@ globalThis.SlideLingo = (() => {
           if (!act && !boxIsExampleBlock && !isMonolingualDialogueOrDrill(t, pTexts) && !hasTargetScript(t)) {
             const wc = t.split(/\s+/).filter(Boolean).length;
             const looksSkip =
+              teacher.test(t) ||
               /^(?:[a-d]|[1-9]\d?)[.)]\s/i.test(t) ||
               /^\/[^/]+\/$/.test(t) ||
               /^\d+(?:[.,:/-]\d+)*%?$/.test(t) ||
@@ -2890,7 +2997,8 @@ globalThis.SlideLingo = (() => {
               /^(?:message|call\s+back\??|urgent\??|column\s+[ab12]|dicey\s+sentences?|thanks|thank\s+you)$/i.test(t);
             if (!looksSkip) {
               const isColonLead = /^[A-Z][A-Za-z0-9\s'’/&-]{2,55}:\s*$/.test(t) &&
-                !/^(?:from|to|cc|bcc|subject|date|time|message\s+for|name|surname|company|job|hometown|nationality|note|notes|answer|answers|transcript|script)\s*:/i.test(t);
+                !/^(?:from|to|cc|bcc|subject|date|time|message\s+for|name|surname|company|job|hometown|nationality|answer|answers|transcript|script)\s*:/i.test(t) &&
+                !(shapeContext.isPhoneForm && /^notes?\s*:/i.test(t));
               const isTrueFalseHeader = shapeContext.trueFalse && /^(?:true|false)(?:\s+(?:or\s+)?false)?$/i.test(t);
               const isTrueFalseStatement = Boolean(
                 shapeContext.trueFalse &&
@@ -2901,18 +3009,23 @@ globalThis.SlideLingo = (() => {
                 !/_{2,}/.test(t)
               );
               const isShortUiOrTitle = isTrueFalseHeader ||
-                /^(?:conversation|pair\s*work|group\s*work|individual\s*work|role[- ]?play|key\s*expressions?|useful\s*expressions?|vocabulary|grammar|pronunciation|student\s+[ab12]|partner\s+[ab12]|scenario|situation)$/i.test(t) ||
-                (inTopHeaderZone && wc >= 2 && wc <= 12 && /^(?:form of|use of|structure of|usage of|key expressions|present\s+(?:continuous|simple)|past\s+(?:continuous|simple)|future\b)/i.test(t));
-              const isInInstructionBox = boxHasPrimaryInstruction && !shapeContext.grammar && (wc >= 3 || /[:.?!]$/.test(t));
+                /^(?:conversation|pair\s*work|group\s*work|individual\s*work|role[- ]?play|key\s*expressions?|useful\s*expressions?|vocabulary|grammar|pronunciation|student\s+[ab12]|partner\s+[ab12]|scenario|situation|wrap[- ]?up(?:\s*&\s*assignment)?|review|summary|homework|assignment|tips?|important\s+notes?|remember|be\s+careful|correction|takeaways?)$/i.test(t) ||
+                (inTopHeaderZone && wc >= 2 && wc <= 12 && /^(?:form of|use of|structure of|usage of|key expressions|present\s+(?:continuous|simple)|past\s+(?:continuous|simple)|future\b|wrap[- ]?up|review|summary)/i.test(t));
+              const isInInstructionBox = !shapeContext.matchingExercise &&
+                (boxHasPrimaryInstruction || shapeContext.review) &&
+                (!shapeContext.grammar || isTheoryOrReviewLine(t)) &&
+                (wc >= 3 || /[:.?!]$/.test(t));
               if (isColonLead || isInInstructionBox || isShortUiOrTitle || isTrueFalseStatement) {
-                const isClearDirective = isTrueFalseStatement || isTrueFalseHeader || isColonLead || directions.test(t) || explicit.test(t) || isGlossaryHeading(t);
+                const isClearDirective = isTrueFalseStatement || isTrueFalseHeader || isColonLead || directions.test(t) || explicit.test(t) || isGlossaryHeading(t) || grammarExplanationRe.test(t) || reviewNoteRe.test(t) || reviewSentenceRe.test(t);
                 const keepShortHeadingInline = isTrueFalseHeader || (/^(?:conversation|pair\s*work|group\s*work|role[- ]?play|key\s*expressions?|student\s+[ab12]|partner\s+[ab12])$/i.test(t));
+                const inferredRole = isShortUiOrTitle ? "heading" : (reviewNoteRe.test(t) || reviewSentenceRe.test(t) || shapeContext.review ? "review" : (isTrueFalseStatement || isColonLead ? "prompt" : "instruction"));
                 act = {
                   mode: keepShortHeadingInline ? "INLINE_APPEND" : (isTrueFalseStatement || isInInstructionBox || isShortUiOrTitle ? "NEWLINE_AFTER" : "INLINE_APPEND"),
                   paren: keepShortHeadingInline ? true : undefined,
                   lockInline: keepShortHeadingInline ? true : undefined,
                   forceNewline: (!keepShortHeadingInline && (isTrueFalseStatement || (isInInstructionBox && wc >= 4))) ? true : undefined,
-                  mustTranslate: (isTrueFalseStatement || isTrueFalseHeader || /^(?:key\s*expressions?|conversation|pair\s*work|group\s*work|role\s*play)$/i.test(t)) ? true : undefined,
+                  mustTranslate: (isClearDirective || isTrueFalseStatement || isTrueFalseHeader || /^(?:key\s*expressions?|conversation|pair\s*work|group\s*work|role\s*play)$/i.test(t)) ? true : undefined,
+                  semanticRole: inferredRole,
                   sourceText: t,
                   hasPattern: hasProtectedPattern(t),
                   needsAiTriage: true,
@@ -2926,11 +3039,12 @@ globalThis.SlideLingo = (() => {
             act.paren = true;
             act.lockInline = true;
             act.mustTranslate = true;
+            act.semanticRole = "heading";
           }
           if (act) {
             if (act.isExample) boxIsExampleBlock = true;
             if (act.mode === "SKIP_HEADER_ONLY") continue;
-            if ((act.mode === "INLINE_APPEND" || act.mode === "NEWLINE_AFTER") && (directions.test(t) || explicit.test(t) || isGlossaryHeading(t) || numberedConceptRe.test(t))) {
+            if ((act.mode === "INLINE_APPEND" || act.mode === "NEWLINE_AFTER") && (directions.test(t) || explicit.test(t) || isGlossaryHeading(t) || numberedConceptRe.test(t) || grammarExplanationRe.test(t) || reviewNoteRe.test(t) || reviewSentenceRe.test(t))) {
               boxHasPrimaryInstruction = true;
             }
             actions.push({ ...act, pNode: pNodes[i], pIndex: i });
@@ -3020,9 +3134,9 @@ globalThis.SlideLingo = (() => {
       return `"${code}"`;
     });
 
-    // Bước 2: Bảo vệ các [placeholder] rời nằm ngoài ngoặc kép, công thức (am/is/are + V-ing) và ký hiệu phiên âm /s/, /ʃ/
+    // Bước 2: Bảo vệ các [placeholder] rời nằm ngoài ngoặc kép, công thức (S + am/is/are + V-ing) và ký hiệu phiên âm /s/, /ʃ/
     const looseBrackets = [];
-    masked = masked.replace(/\b(?:am\s*\/\s*is\s*\/\s*are|is\s*\/\s*are)\s*\+\s*(?:always\s*\+\s*)?(?:V-ing|V\b(?:-?[a-z]+)?|Object)(?:\s*\+\s*[A-Za-z0-9\-]+)*/gi, fullMatch => {
+    masked = masked.replace(/\b(?:(?:S|Subject)\s*\+\s*)?(?:am\s*\/\s*is\s*\/\s*are|is\s*\/\s*are|be)\s*\+\s*(?:always\s*\+\s*)?(?:V-ing|V\b(?:-?[a-z]+)?|Object)(?:\s*\+\s*[A-Za-z0-9\-\/]+)*/gi, fullMatch => {
       const idx = looseBrackets.length;
       const code = 801 + idx;
       looseBrackets.push({ inner: fullMatch.trim(), code, raw: true });
@@ -4905,7 +5019,7 @@ globalThis.SlideLingo = (() => {
         if (a.container === b || b.container === a) continue;
         if (a.contents?.includes(b) || b.contents?.includes(a)) continue;
         if (a.hostCell && b.hostCell && a.hostCell !== b.hostCell) continue;
-        if (a.container && a.container === b.container && false) continue;
+        if (a.hostCell?.tableItem === b || b.hostCell?.tableItem === a) continue;
         const eb = origExtent(b);
         const ra = ea.rect, rb = eb.rect;
         if (hOverlap(ra, rb) <= 2) continue;
@@ -4916,8 +5030,16 @@ globalThis.SlideLingo = (() => {
         }
         const tb = spanTop(eb, ra.x, ra.x + ra.w);
         const bTop = Math.min(rb.y, tb === Infinity ? rb.y : tb);
-        if (sb > bTop + 2) continue;
-        rels.push({ a, b, gap: Math.max(0, bTop - sb) });
+        const ix = Math.max(0, Math.min(ra.x + ra.w, rb.x + rb.w) - Math.max(ra.x, rb.x));
+        const iy = Math.max(0, Math.min(ra.y + ra.h, rb.y + rb.h) - Math.max(ra.y, rb.y));
+        const interA = ix * iy;
+        const minArea = Math.max(1, Math.min(ra.w * ra.h, rb.w * rb.h));
+        const slightOverlap = sb > bTop + 2 &&
+          sb <= bTop + 24 &&
+          interA < minArea * 0.45 &&
+          (a.modified || a.contents?.some(c => c.modified) || b.modified || b.contents?.some(c => c.modified));
+        if (sb > bTop + 2 && !slightOverlap) continue;
+        rels.push({ a, b, gap: slightOverlap ? Math.max(4, bTop - sb) : Math.max(0, bTop - sb) });
       }
     }
 
@@ -4987,6 +5109,97 @@ globalThis.SlideLingo = (() => {
       return { bottom: Math.max(bottom, e.y + e.h), top: Math.min(top, e.y) };
     }
     for (const it of solids) it.lim = limitsOf(it);
+
+    // ===== Helper va chạm & dịch chuyển dùng chung cho evaluate / autofit / anti-overlap =====
+    function isCollisionExempt(m, o) {
+      if (o === m || o.background || o === m.container || o.attachedTo?.host === m || m.attachedTo?.host === o) return true;
+      if (o.contents?.includes(m) || m.contents?.includes(o)) return true;
+      if (o.hostCell?.tableItem === m || m.hostCell?.tableItem === o) return true;
+      if (m.hostCell && o.hostCell && m.hostCell !== o.hostCell) return true;
+      if (m.inGroup && o.inGroup && m.group === o.group) return true;
+      if (o.kind === "line") return true;
+      return false;
+    }
+    function origCollisionHit(m, o) {
+      const eo = origExtent(o).rect;
+      if (m.kind === "text" && m.orig?.lines?.length) {
+        if (m.orig.lines.some(l => rectsHit(l, eo, 1))) return true;
+        if (m.filled && !m.container && rectsHit(m.origRect, eo, 1)) return true;
+        return false;
+      }
+      return rectsHit(origExtent(m).rect, eo, 1);
+    }
+    function shiftItem(it, dy) {
+      it.dy += dy;
+      if (it.kind === "text" && it.modified) geomText(it);
+      if (it.contents) for (const c of it.contents) shiftItem(c, dy);
+    }
+    function updateContainers(gapScale = 1) {
+      for (const c of live) {
+        if (!c.contents?.length || c.kind === "pic") continue;
+        const r = c.origRect;
+        const origMaxB = Math.max(...c.contents.map(x => origExtent(x).rect.y + origExtent(x).rect.h));
+        const origMinT = Math.min(...c.contents.map(x => origExtent(x).rect.y));
+        const padB = Math.max(4, (r.y + r.h - origMaxB) * gapScale);
+        const padT = Math.max(4, (origMinT - r.y) * gapScale);
+        const curMaxB = Math.max(...c.contents.map(x => { const e = extentOf(x).rect; return e.y + e.h; }));
+        const curMinT = Math.min(...c.contents.map(x => extentOf(x).rect.y));
+        c.growB = Math.max(0, curMaxB + padB - (r.y + r.h + c.dy));
+        c.growT = Math.max(0, (r.y + c.dy) - (curMinT - padT));
+      }
+    }
+    function collectPairwiseIssues() {
+      const issues = [];
+      for (const m of mods) {
+        if (m.inGroup || m.inTable || !m.g) continue;
+        const origMinX = m.orig.lines.length ? Math.min(...m.orig.lines.map(l => l.x)) : m.origRect.x;
+        const origMaxX = m.orig.lines.length ? Math.max(...m.orig.lines.map(l => l.x + l.w)) : m.origRect.x + m.origRect.w;
+        for (const l of m.g.lines) {
+          if (l.x + l.w > W - 1 && origMaxX <= W) issues.push({ kind: "edge", m, ov: l.x + l.w - (W - 1), side: "right" });
+          if (l.x < 1 && origMinX >= 0) issues.push({ kind: "edge", m, ov: 1 - l.x, side: "left" });
+        }
+        if (m.container?.kind === "pic") {
+          const cr = curRect(m.container);
+          const mr = extentOf(m).rect;
+          const origMR = origExtent(m).rect;
+          const origCR = m.container.origRect;
+          if (origMR.y + origMR.h <= origCR.y + origCR.h + 2) {
+            const picOv = Math.max(mr.y + mr.h - (cr.y + cr.h - 1), (cr.y + 1) - mr.y, mr.x + mr.w - (cr.x + cr.w - 1), (cr.x + 1) - mr.x);
+            if (picOv > 0.5) issues.push({ kind: "pic", m, o: m.container, ov: picOv });
+          }
+        }
+        const mrBox = m.filled && !m.container ? m.g.rect : null;
+        for (const o of live) {
+          if (isCollisionExempt(m, o) || origCollisionHit(m, o)) continue;
+          const er = extentOf(o).rect;
+          const hitLines = m.g.lines.filter(l => rectsHit(l, er, 2));
+          const hitFilled = !hitLines.length && mrBox && mrBox.h > m.origRect.h + 1 && rectsHit(mrBox, er, 2);
+          if (hitLines.length || hitFilled) {
+            const rects = hitLines.length ? hitLines : [mrBox];
+            let maxPen = 0;
+            for (const r of rects) {
+              const ovY = Math.min(r.y + r.h, er.y + er.h) - Math.max(r.y, er.y);
+              const ovX = Math.min(r.x + r.w, er.x + er.w) - Math.max(r.x, er.x);
+              if (ovY > 0 && ovX > 0) maxPen = Math.max(maxPen, Math.min(ovY, ovX) + 1);
+            }
+            if (maxPen > 0.5) issues.push({ kind: "pair", m, o, ov: maxPen });
+          }
+        }
+      }
+      for (const blk of [...groupsWithMods, ...tablesWithMods]) {
+        const br = extentOf(blk).rect;
+        for (const o of live) {
+          if (isCollisionExempt(blk, o) || blk.kids?.includes(o) || origCollisionHit(blk, o)) continue;
+          const er = extentOf(o).rect;
+          if (rectsHit(br, er, 2)) {
+            const ovY = Math.min(br.y + br.h, er.y + er.h) - Math.max(br.y, er.y);
+            const ovX = Math.min(br.x + br.w, er.x + er.w) - Math.max(br.x, er.x);
+            if (ovY > 0 && ovX > 0) issues.push({ kind: "pair", m: blk, o, ov: Math.min(ovY, ovX) + 1 });
+          }
+        }
+      }
+      return issues;
+    }
 
     // ===== Đánh giá một cấu hình nén =====
     const groupsWithMods = new Set(mods.filter(m => m.inGroup).map(m => m.group));
@@ -5082,26 +5295,8 @@ globalThis.SlideLingo = (() => {
         g.growB = grow;
       }
       const gapOf = r => Math.max(Math.min(r.gap, RF.minGap), r.gap * knobs.gap);
-      const shift = (it, s) => {
-        it.dy += s;
-        if (it.kind === "text" && it.modified) geomText(it);
-        if (it.contents) for (const c of it.contents) shift(c, s);
-      };
-      const updateContainers = () => {
-        for (const c of live) {
-          if (!c.contents?.length || c.kind === "pic") continue;
-          const r = c.origRect;
-          const origMaxB = Math.max(...c.contents.map(x => origExtent(x).rect.y + origExtent(x).rect.h));
-          const origMinT = Math.min(...c.contents.map(x => origExtent(x).rect.y));
-          const padB = Math.max(4, (r.y + r.h - origMaxB) * knobs.gap);
-          const padT = Math.max(4, (origMinT - r.y) * knobs.gap);
-          const curMaxB = Math.max(...c.contents.map(x => { const e = extentOf(x).rect; return e.y + e.h; }));
-          const curMinT = Math.min(...c.contents.map(x => extentOf(x).rect.y));
-          c.growB = Math.max(0, curMaxB + padB - (r.y + r.h + c.dy));
-          c.growT = Math.max(0, (r.y + c.dy) - (curMinT - padT));
-        }
-      };
-      updateContainers();
+      const shift = shiftItem;
+      updateContainers(knobs.gap);
       const relsUp = [...rels].sort((p, q) => origExtent(q.a).rect.y - origExtent(p.a).rect.y);
       const relsDown = [...rels].sort((p, q) => origExtent(p.b).rect.y - origExtent(q.b).rect.y);
       // Lượt đi lên: khối neo đáy mọc lên → đẩy phần tử phía trên lên
@@ -5123,7 +5318,7 @@ globalThis.SlideLingo = (() => {
           const m = Math.min(...row.map(i => i.dy));
           if (m < -0.5) for (const i of row) if (i.dy > m + 0.5) { shift(i, m - i.dy); changed = true; }
         }
-        if (changed) updateContainers(); else break;
+        if (changed) updateContainers(knobs.gap); else break;
       }
       // Nếu phần tử chữ neo đáy/tâm (hoặc nằm đè trên ô bảng có tiêu đề) vượt trần lim.top, đẩy xuống trước khi lan truyền relsDown
       for (const it of solids) {
@@ -5131,7 +5326,7 @@ globalThis.SlideLingo = (() => {
         const e = extentOf(it).rect;
         if (e.y < it.lim.top - 0.5) {
           shift(it, it.lim.top - e.y);
-          updateContainers();
+          updateContainers(knobs.gap);
         }
       }
       // Lượt đi xuống: đẩy phần tử bên dưới theo nhịp khoảng cách gốc (giữ nguyên liên kết với container)
@@ -5153,7 +5348,7 @@ globalThis.SlideLingo = (() => {
           const m = Math.max(...row.map(i => i.dy));
           for (const i of row) if (i.dy < m - 0.5) { shift(i, m - i.dy); changed = true; }
         }
-        updateContainers();
+        updateContainers(knobs.gap);
         if (!changed) break;
       }
       // Nếu chuỗi dọc bị tràn đáy slide (lim.bottom), kéo toàn bộ chuỗi lên phần khoảng trống khả dụng phía trên (như designer cân lại bố cục dọc)
@@ -5191,11 +5386,11 @@ globalThis.SlideLingo = (() => {
           const availUp = e.y - ceiling;
           if (availUp > 0.5) {
             shift(it, -Math.min(availUp, maxOver));
-            updateContainers();
+            updateContainers(knobs.gap);
           }
         }
       }
-      // Tràn biên
+      // Tràn biên & va chạm cặp đôi
       let overflow = 0;
       // Chữ bị đẩy ra vùng nền tương phản kém (ví dụ rơi khỏi băng màu tối) cũng tính là tràn
       if (model.contrastOK) {
@@ -5220,6 +5415,12 @@ globalThis.SlideLingo = (() => {
         if (!moved) continue;
         const o2 = Math.max(e.y + e.h - it.lim.bottom, it.lim.top - e.y);
         if (o2 > overflow) { overflow = o2; model.ovWho = { id: it.id, why: e.y + e.h - it.lim.bottom > it.lim.top - e.y ? "bottom" : "top", v: Math.round(o2), lim: it.lim, e: [Math.round(e.y), Math.round(e.y + e.h)] }; }
+      }
+      for (const iss of collectPairwiseIssues()) {
+        if (iss.ov > overflow) {
+          overflow = iss.ov;
+          model.ovWho = { id: iss.m.id, why: iss.kind === "pair" ? `collide:${iss.o.id}` : iss.kind, v: Math.round(iss.ov) };
+        }
       }
       return overflow;
     }
@@ -5343,6 +5544,21 @@ globalThis.SlideLingo = (() => {
             geomText(m);
           }
         }
+        // Giới hạn đáy theo vật cản cố định / không thể đẩy thêm nằm bên dưới
+        if (!m.hostCell) {
+          const curMr = extentOf(m).rect;
+          const origMr = origExtent(m).rect;
+          for (const o of live) {
+            if (isCollisionExempt(m, o) || origCollisionHit(m, o)) continue;
+            const er = extentOf(o).rect;
+            if (hOverlap(curMr, er) <= 2 || er.y < origMr.y - 2) continue;
+            const targetO = o.container || o;
+            const oAtFloor = targetO.lim && (er.y + er.h) >= targetO.lim.bottom - 3;
+            if (!isMovable(targetO) || oAtFloor || m.g?.lines?.some(l => rectsHit(l, er, 2))) {
+              m.lim.bottom = Math.max(m.lim.top + 14, Math.min(m.lim.bottom, er.y - 3));
+            }
+          }
+        }
         const bottomOf = () => {
           const er = extentOf(m).rect;
           return m.container?.kind === "pic" && m.g?.rect ? Math.max(er.y + er.h, m.g.rect.y + m.g.rect.h) : er.y + er.h;
@@ -5411,19 +5627,84 @@ globalThis.SlideLingo = (() => {
         m.needsNormAutofit = true;
         log.push({ it: m.id, step: "localAutofit", trans: Math.round(m.k.trans * 100) / 100, src: Math.round(m.k.src * 100) / 100, lead: Math.round((m.frame.lead ?? 1) * 100) / 100, overB: Math.round(overB) });
       }
-      if (!adjusted) return;
-      for (const c of live) {
-        if (!c.contents?.length || c.kind === "pic") continue;
-        const r = c.origRect;
-        const origMaxB = Math.max(...c.contents.map(x => origExtent(x).rect.y + origExtent(x).rect.h));
-        const origMinT = Math.min(...c.contents.map(x => origExtent(x).rect.y));
-        const padB = Math.max(4, r.y + r.h - origMaxB);
-        const padT = Math.max(4, origMinT - r.y);
-        const curMaxB = Math.max(...c.contents.map(x => { const e2 = extentOf(x).rect; return e2.y + e2.h; }));
-        const curMinT = Math.min(...c.contents.map(x => extentOf(x).rect.y));
-        c.growB = Math.max(0, curMaxB + padB - (r.y + r.h + c.dy));
-        c.growT = Math.max(0, (r.y + c.dy) - (curMinT - padT));
+      // Auto-Scale cho các nhóm (grpSp) và bảng (table) có bản dịch nếu còn tràn đáy hoặc chạm phần tử bên dưới
+      const groupLimBottom = blk => {
+        let btm = blk.lim?.bottom ?? (H - RF.margin);
+        const br = extentOf(blk).rect;
+        const origBr = origExtent(blk).rect;
+        for (const o of live) {
+          if (isCollisionExempt(blk, o) || blk.kids?.includes(o) || origCollisionHit(blk, o)) continue;
+          const er = extentOf(o).rect;
+          if (hOverlap(br, er) > 2 && er.y >= origBr.y - 2 && !isMovable(o.container || o)) {
+            btm = Math.min(btm, er.y - 3);
+          }
+        }
+        return btm;
+      };
+      for (const g of groupsWithMods) {
+        const limB = groupLimBottom(g);
+        const recomputeGroupGrow = () => {
+          let grow = 0;
+          for (const kid of g.kids.filter(k => k.modified)) {
+            const kw = kid.gWidenW || kid.origRect.w;
+            kid.gLay = layoutFrame(kid.frame, Math.max(8, kw - kid.insets.l - kid.insets.r), kid.wrap);
+            const availH = Math.max(kid.orig.lay.height, kid.origRect.h - kid.insets.t - kid.insets.b);
+            grow += Math.max(0, kid.gLay.height - availH);
+          }
+          g.growB = grow;
+        };
+        let gB = g.origRect.y + (g.dy || 0) - (g.growT || 0) + g.origRect.h + (g.growB || 0);
+        if (gB > limB + 0.5) {
+          adjusted = true;
+          const modKids = g.kids.filter(k => k.modified);
+          for (let step = 0; step < 24 && gB > limB + 0.5; step++) {
+            let stepChanged = false;
+            for (const kid of modKids) {
+              if ((kid.frame.lead ?? 1) > 0.1) { kid.frame.lead = Math.max(0.1, (kid.frame.lead ?? 1) - 0.25); stepChanged = true; }
+              else if (kid.k.trans > 0.45) { kid.k.trans = Math.max(0.45, kid.k.trans - 0.06); stepChanged = true; }
+              else if (kid.k.src > 0.62) { kid.k.src = Math.max(0.62, kid.k.src - 0.05); stepChanged = true; }
+              kid.needsNormAutofit = true;
+            }
+            if (!stepChanged) break;
+            recomputeGroupGrow();
+            gB = g.origRect.y + (g.dy || 0) - (g.growT || 0) + g.origRect.h + (g.growB || 0);
+          }
+        }
       }
+      for (const tblIt of tablesWithMods) {
+        if (!tblIt?.table) continue;
+        const limB = groupLimBottom(tblIt);
+        const recomputeTableH = () => {
+          for (const row of tblIt.table.rows) {
+            let minH = 12;
+            for (const cm of row.cells) {
+              const lay = layoutFrame(cm.item.frame, Math.max(10, cm.w - cm.marL - cm.marR), true);
+              minH = Math.max(minH, lay.height + cm.marT + cm.marB);
+            }
+            row.minH = minH;
+          }
+          tblIt.rowH = tblIt.table.rows.map(r => Math.max(r.h, r.minH));
+        };
+        let tB = extentOf(tblIt).rect.y + extentOf(tblIt).rect.h;
+        if (tB > limB + 0.5) {
+          adjusted = true;
+          const modCells = tblIt.table.rows.flatMap(r => r.cells.map(c => c.item)).filter(it => it.modified);
+          for (let step = 0; step < 24 && tB > limB + 0.5; step++) {
+            let stepChanged = false;
+            for (const cmIt of modCells) {
+              if ((cmIt.frame.lead ?? 1) > 0.1) { cmIt.frame.lead = Math.max(0.1, (cmIt.frame.lead ?? 1) - 0.25); stepChanged = true; }
+              else if (cmIt.k.trans > 0.45) { cmIt.k.trans = Math.max(0.45, cmIt.k.trans - 0.06); stepChanged = true; }
+              else if (cmIt.k.src > 0.62) { cmIt.k.src = Math.max(0.62, cmIt.k.src - 0.05); stepChanged = true; }
+              cmIt.needsNormAutofit = true;
+            }
+            if (!stepChanged) break;
+            recomputeTableH();
+            tB = extentOf(tblIt).rect.y + extentOf(tblIt).rect.h;
+          }
+        }
+      }
+      if (!adjusted) return;
+      updateContainers(1);
       let nextOv = 0;
       model.ovWho = null;
       for (const it of solids) {
@@ -5436,38 +5717,208 @@ globalThis.SlideLingo = (() => {
           model.ovWho = { id: it.id, why: er.y + er.h - it.lim.bottom > it.lim.top - er.y ? "bottom" : "top", v: Math.round(o2), lim: it.lim, e: [Math.round(er.y), Math.round(er.y + er.h)] };
         }
       }
+      for (const iss of collectPairwiseIssues()) {
+        if (iss.ov > nextOv) {
+          nextOv = iss.ov;
+          model.ovWho = { id: iss.m.id, why: iss.kind === "pair" ? `collide:${iss.o.id}` : iss.kind, v: Math.round(iss.ov) };
+        }
+      }
       result.ov = nextOv;
+    }
+
+    // Xử lý triệt để mọi va chạm / tràn còn sót bằng đẩy tầng xuống, kéo lên chỗ trống hoặc co giãn cục bộ — KHÔNG bao giờ đẩy bản dịch ra Speaker Notes
+    function resolveRemainingCollisions() {
+      const compactOneStep = (m, allowInline = true) => {
+        if (!m || m.kind !== "text") return false;
+        let did = false;
+        if (!m.inGroup && !m.inTable && !m.hostCell) {
+          const prevW = m.box?.w || m.origRect.w;
+          widenBounds(m);
+          if ((m.box?.w || m.origRect.w) > prevW + 2) did = true;
+        }
+        if (allowInline) {
+          for (const rec of m.records) {
+            if (!rec.converted) continue;
+            const innerW = Math.max(8, (m.box?.w || m.origRect.w) - m.insets.l - m.insets.r);
+            const hBefore = layoutFrame(m.frame, innerW, m.wrap).height;
+            newlineToInline(rec);
+            const hAfter = layoutFrame(m.frame, innerW, m.wrap).height;
+            if (hAfter < hBefore - 0.5) did = true;
+            else inlineToNewline(rec);
+          }
+        }
+        if (m.insets.t > 0.5 || m.insets.b > 0.5) {
+          m.insets = { ...m.insets, t: Math.max(0.5, m.insets.t - 1.5), b: Math.max(0.5, m.insets.b - 1.5) };
+          did = true;
+        }
+        if ((m.frame.lead ?? 1) > 0.05) {
+          m.frame.lead = Math.max(0.05, (m.frame.lead ?? 1) - 0.25);
+          did = true;
+        } else if (m.k.trans > 0.36) {
+          m.k.trans = Math.max(0.36, m.k.trans - 0.06);
+          did = true;
+        } else if (m.k.src > 0.50) {
+          m.k.src = Math.max(0.50, m.k.src - 0.05);
+          did = true;
+        }
+        m.needsNormAutofit = true;
+        if (!m.inGroup && !m.inTable) geomText(m);
+        return did;
+      };
+
+      for (let pass = 0; pass < 18; pass++) {
+        updateContainers(1);
+        const allIssues = collectPairwiseIssues();
+        for (const it of solids) {
+          const er = extentOf(it).rect;
+          const moved = Math.abs(it.dy) > 0.5 || it.modified || it.growB || it.growT || (it.scale && it.scale < 1) || it.rowH;
+          if (!moved) continue;
+          const ov = Math.max(er.y + er.h - it.lim.bottom, it.lim.top - er.y);
+          if (ov > 0.5) allIssues.push({ kind: "bounds", m: it, ov, dir: er.y + er.h - it.lim.bottom > it.lim.top - er.y ? "bottom" : "top" });
+        }
+        if (!allIssues.length) {
+          result.ov = 0;
+          break;
+        }
+        let progressed = false;
+        for (const iss of allIssues) {
+          if (iss.kind === "pair") {
+            const { m, o } = iss;
+            const targetO = o.container || o;
+            const mr = extentOf(m).rect;
+            const or = extentOf(targetO).rect;
+            // Tìm mép dưới thực sự của vùng chữ m giao ngang với o
+            let collBottom = mr.y + mr.h;
+            if (m.kind === "text" && m.g?.lines?.length) {
+              const horizLines = m.g.lines.filter(l => hOverlap(l, extentOf(o).rect) > 1);
+              if (horizLines.length) collBottom = Math.max(...horizLines.map(l => l.y + l.h), m.filled && !m.container ? m.g.rect.y + m.g.rect.h : -Infinity);
+            }
+            const needPush = Math.max(2, collBottom + 4 - extentOf(o).rect.y);
+            // 1. Ưu tiên đẩy cascade o (và dây chuyền bên dưới o) xuống nếu còn dư địa phía dưới
+            if (isMovable(targetO) && !targetO.hostCell && origExtent(o).rect.y >= origExtent(m).rect.y - 4) {
+              const downSet = new Set([targetO]);
+              let grewSet = true;
+              while (grewSet) {
+                grewSet = false;
+                for (const r of rels) {
+                  const tb = r.b.container || r.b;
+                  if ((downSet.has(r.a) || (r.a.container && downSet.has(r.a.container))) && isMovable(tb) && !downSet.has(tb)) {
+                    downSet.add(tb); grewSet = true;
+                  }
+                }
+                for (const row of rowGroups) {
+                  if (row.some(x => downSet.has(x))) {
+                    for (const x of row) if (isMovable(x) && !downSet.has(x)) { downSet.add(x); grewSet = true; }
+                  }
+                }
+              }
+              const roots = [...downSet].filter(d => !(d.container && downSet.has(d.container)));
+              const minHeadroom = Math.min(...roots.map(d => (d.lim?.bottom ?? (H - RF.margin)) - (extentOf(d).rect.y + extentOf(d).rect.h)));
+              if (minHeadroom > 0.75) {
+                const pushAmt = Math.min(needPush, minHeadroom);
+                for (const d of roots) shiftItem(d, pushAmt);
+                updateContainers(1);
+                log.push({ it: targetO.id, step: "pushDown", dy: Math.round(pushAmt) });
+                progressed = true;
+                if (pushAmt >= needPush - 0.2) continue;
+              }
+            }
+            // 2. Kéo m (hoặc container của m) lên khoảng trống khả dụng phía trên
+            const mc = m.container || m;
+            if (isMovable(mc) && !mc.hostCell && mc.container?.kind !== "pic") {
+              const mRect = extentOf(mc).rect;
+              let ceiling = Math.max(mc.lim?.top ?? RF.margin, RF.margin);
+              for (const up of live) {
+                if (up === mc || up.background || mc.contents?.includes(up) || up.contents?.includes(mc) || up.kind === "line") continue;
+                const ur = extentOf(up).rect;
+                if (hOverlap(mRect, ur) > 2 && ur.y + ur.h <= mRect.y + 4) {
+                  ceiling = Math.max(ceiling, ur.y + ur.h + 4);
+                }
+              }
+              const availUp = mRect.y - ceiling;
+              if (availUp > 1.5) {
+                const pullAmt = Math.min(availUp, needPush);
+                shiftItem(mc, -pullAmt);
+                updateContainers(1);
+                log.push({ it: mc.id, step: "pullUp", dy: -Math.round(pullAmt) });
+                progressed = true;
+                continue;
+              }
+            }
+            // 3. Co chữ & giãn dòng cục bộ trên m (hoặc kids/cells nếu là group/table)
+            if (m.kind === "group") {
+              for (const kid of m.kids.filter(k => k.modified)) if (compactOneStep(kid, false)) progressed = true;
+              if (progressed) {
+                let grow = 0;
+                for (const kid of m.kids.filter(k => k.modified)) {
+                  const kw = kid.gWidenW || kid.origRect.w;
+                  kid.gLay = layoutFrame(kid.frame, Math.max(8, kw - kid.insets.l - kid.insets.r), kid.wrap);
+                  const availH = Math.max(kid.orig.lay.height, kid.origRect.h - kid.insets.t - kid.insets.b);
+                  grow += Math.max(0, kid.gLay.height - availH);
+                }
+                m.growB = grow;
+              }
+            } else if (m.kind === "table" && m.table) {
+              for (const r of m.table.rows) for (const cm of r.cells) if (cm.item.modified && compactOneStep(cm.item, false)) progressed = true;
+              if (progressed) {
+                for (const row of m.table.rows) {
+                  let minH = 12;
+                  for (const cm of row.cells) minH = Math.max(minH, layoutFrame(cm.item.frame, Math.max(10, cm.w - cm.marL - cm.marR), true).height + cm.marT + cm.marB);
+                  row.minH = minH;
+                }
+                m.rowH = m.table.rows.map(r => Math.max(r.h, r.minH));
+              }
+            } else if (compactOneStep(m, true)) {
+              log.push({ it: m.id, step: "antiOverlapCompact", trans: Math.round(m.k.trans * 100) / 100, src: Math.round(m.k.src * 100) / 100 });
+              progressed = true;
+            }
+          } else if (iss.kind === "edge") {
+            const { m, side, ov } = iss;
+            m.wrap = true;
+            if (side === "right" && m.box && m.box.x > RF.margin + 4) {
+              const pullX = Math.min(ov + 2, m.box.x - RF.margin);
+              m.box = { x: m.box.x - pullX, w: m.box.w + pullX };
+              geomText(m);
+              progressed = true;
+            } else if (compactOneStep(m, false)) {
+              progressed = true;
+            }
+          } else if (iss.kind === "pic") {
+            if (compactOneStep(iss.m, true)) progressed = true;
+          } else if (iss.kind === "bounds") {
+            const { m, dir, ov } = iss;
+            if (dir === "bottom" && isMovable(m) && !m.hostCell && m.container?.kind !== "pic") {
+              const mr = extentOf(m).rect;
+              let ceiling = Math.max(m.lim?.top ?? RF.margin, RF.margin);
+              for (const up of live) {
+                if (up === m || up.background || m.contents?.includes(up) || up.contents?.includes(m) || up.kind === "line") continue;
+                const ur = extentOf(up).rect;
+                if (hOverlap(mr, ur) > 2 && ur.y + ur.h <= mr.y + 4) ceiling = Math.max(ceiling, ur.y + ur.h + 4);
+              }
+              const availUp = mr.y - ceiling;
+              if (availUp > 1.5) {
+                shiftItem(m, -Math.min(availUp, ov));
+                updateContainers(1);
+                progressed = true;
+                continue;
+              }
+            }
+            if (m.kind === "text" && compactOneStep(m, true)) progressed = true;
+          }
+        }
+        if (!progressed) break;
+      }
+      updateContainers(1);
+      const remPairs = collectPairwiseIssues();
+      result.ov = remPairs.length ? Math.max(...remPairs.map(i => i.ov)) : 0;
     }
 
     model.ovWho = null;
     let result = solveBest();
     applyLocalBoxAutofit();
-    if (result.ov > 0.5) log.push({ step: "overflow", who: model.ovWho });
-    let guard = 0;
-    while (result.ov > 0.5 && guard++ < 6) {
-      // Phương án cuối: chuyển bản dịch của khối tăng nhiều nhất vào ghi chú
-      const cand = mods.filter(m => m.records.length && !m.inTable)
-        .map(m => ({ m, grow: m.inGroup ? (m.gLay?.height || 0) - m.orig.lay.height : (m.g?.T || 0) - m.orig.lay.height }))
-        .sort((p, q) => q.grow - p.grow)[0];
-      if (!cand) break;
-      for (const rec of cand.m.records) {
-        if (rec.text) notes.push(rec.text);
-        revertRecord(rec);
-      }
-      cand.m.records = [];
-      cand.m.trRuns.clear();
-      cand.m.modified = false;
-      log.push({ it: cand.m.id, step: "notes" });
-      mods = allText.filter(t => t.modified);
-      if (!mods.length) { for (const it of live) { it.dy = 0; it.growB = 0; it.growT = 0; it.scale = 1; it.rowH = null; } result = { ov: 0, knobs: { table: 0, gap: 1, lead: 1, pic: 1, trans: 1, src: 1 } }; break; }
-      groupsWithMods.clear();
-      tablesWithMods.clear();
-      for (const m of mods) {
-        if (m.inGroup) groupsWithMods.add(m.group);
-        if (m.inTable) tablesWithMods.add(m.tableItem);
-      }
-      result = solveBest();
-      applyLocalBoxAutofit();
+    if (result.ov > 0.5 || collectPairwiseIssues().length) {
+      log.push({ step: "overflow", who: model.ovWho });
+      resolveRemainingCollisions();
     }
     const { knobs } = result;
     log.push({ step: "knobs", ...Object.fromEntries(Object.entries(knobs).map(([k, v]) => [k, Math.round(v * 1000) / 1000])), overflow: Math.round(result.ov * 10) / 10 });
@@ -5636,11 +6087,8 @@ globalThis.SlideLingo = (() => {
     for (const m of mods) {
       if (m.inGroup || m.inTable || !m.g) continue;
       for (const o of live) {
-        if (o === m || o.background || o === m.container || o.attachedTo?.host === m || o.kind === "line") continue;
-        if (o.contents?.includes(m)) continue;
+        if (isCollisionExempt(m, o) || origCollisionHit(m, o)) continue;
         const er = extentOf(o).rect;
-        const origHit = m.orig.lines.some(l => rectsHit(l, origExtent(o).rect, 1));
-        if (origHit) continue;
         if (m.g.lines.some(l => rectsHit(l, er, 2))) collisions.push({ it: m.id, with: o.id });
       }
       for (const l of m.g.lines) {
@@ -5657,7 +6105,8 @@ globalThis.SlideLingo = (() => {
     const sy = Number(ext.getAttribute("cy")) / Math.max(1, Number(chExt.getAttribute("cy")));
     const sxScale = Number(ext.getAttribute("cx")) / Math.max(1, Number(chExt.getAttribute("cx")));
     const dChild = grow / (sy || 1);
-    for (const kid of g.kids.filter(k => k.modified)) {
+    const modKids = g.kids.filter(k => k.modified).sort((a, b) => a.origRect.y - b.origRect.y);
+    for (const kid of modKids) {
       const kx = getXfrmEl(kid.node);
       const kOff = child(kx, A, "off"), kExt = child(kx, A, "ext");
       if (!kOff || !kExt) continue;
@@ -5666,19 +6115,23 @@ globalThis.SlideLingo = (() => {
         const kGrowW = (kid.gWidenW - kid.origRect.w) / (sxScale || 1);
         kExt.setAttribute("cx", String(Math.round((kw + kGrowW) * PT)));
       }
+      const kx0 = Number(kOff.getAttribute("x")) / PT, kw0 = Number(kExt.getAttribute("cx")) / PT;
       const ky = Number(kOff.getAttribute("y")) / PT, kh = Number(kExt.getAttribute("cy")) / PT;
       const availH = Math.max(kid.orig.lay.height, kid.origRect.h - kid.insets.t - kid.insets.b);
       const kGrow = Math.max(0, (kid.gLay?.height || 0) - availH) / (sy || 1);
       kExt.setAttribute("cy", String(Math.round((kh + kGrow) * PT)));
-      // các phần tử cùng nhóm: hình nền chứa chữ cao thêm, phần tử phía dưới dời xuống
+      // các phần tử cùng cột trong nhóm: hình nền chứa chữ cao thêm, phần tử phía dưới dời xuống
       for (const sib of Array.from(kid.node.parentNode.children)) {
         if (sib === kid.node || sib.namespaceURI !== P) continue;
         const sx = getXfrmEl(sib);
         const sOff = child(sx, A, "off"), sExt = child(sx, A, "ext");
         if (!sOff || !sExt) continue;
+        const sx0 = Number(sOff.getAttribute("x")) / PT, sw0 = Number(sExt.getAttribute("cx")) / PT;
+        const hOv = Math.min(kx0 + kw0, sx0 + sw0) - Math.max(kx0, sx0);
+        if (hOv <= 4) continue;
         const sy0 = Number(sOff.getAttribute("y")) / PT, sh = Number(sExt.getAttribute("cy")) / PT;
-        if (sy0 <= ky + 1 && sy0 + sh >= ky + kh - 1) sExt.setAttribute("cy", String(Math.round((sh + kGrow) * PT)));
-        else if (sy0 >= ky + kh - 1) sOff.setAttribute("y", String(Math.round((sy0 + kGrow) * PT)));
+        if (sy0 <= ky + 2 && sy0 + sh >= ky + kh - 2) sExt.setAttribute("cy", String(Math.round((sh + kGrow) * PT)));
+        else if (sy0 >= ky + kh - 18 && sy0 >= ky + 2) sOff.setAttribute("y", String(Math.round((sy0 + kGrow) * PT)));
       }
     }
     chExt.setAttribute("cy", String(Math.round(Number(chExt.getAttribute("cy")) + dChild * PT)));
@@ -5808,17 +6261,34 @@ globalThis.SlideLingo = (() => {
       }
 
       if (aiBatchFn) {
+        const liveItems = model?.live || [];
         for (const entry of source) {
           if (shouldSkipAnimatedEntry(entry, targets)) continue;
           const item = model?.textByNode.get(entry.node);
+          const curR = item?.origRect || entry.rect;
           const boxWidthPt = Math.round(item?.rect?.w || entry.rect?.w || 420);
           const boxHeightPt = Math.round(item?.rect?.h || entry.rect?.h || 60);
+          let freeBelowPt = 180;
+          if (curR) {
+            let floorY = H - RF.margin;
+            for (const other of liveItems) {
+              if (!other || other.background || other === item || other === item?.container || other.contents?.includes(item)) continue;
+              const or = other.origRect;
+              if (!or) continue;
+              const hOv = Math.min(curR.x + curR.w, or.x + or.w) - Math.max(curR.x, or.x);
+              if (hOv > 4 && or.y >= curR.y + curR.h - 14) {
+                floorY = Math.min(floorY, or.y);
+              }
+            }
+            freeBelowPt = Math.max(0, Math.round(floorY - (curR.y + curR.h)));
+          }
           const rPrs = descendants(entry.body, A, "rPr");
           const fontSizePt = rPrs.length ? Math.max(8, Math.min(72, Math.round((rPrs.reduce((s, r) => s + (Number(r.getAttribute("sz")) || 1600), 0) / rPrs.length) / 100))) : 16;
           const inCard = Boolean(item?.hostCell || item?.container || (item?.filled && boxHeightPt >= 85 && boxWidthPt <= W * 0.65));
+          const tight = Boolean(inCard || freeBelowPt < 28 || entry.actions.length >= 3);
           const charsPerLine = Math.max(12, Math.floor((boxWidthPt - 18) / (fontSizePt * (cjkTarget ? 1.02 : 0.54))));
-          const rowBudget = Math.max(20, Math.round(charsPerLine * (inCard ? (entry.actions.length >= 3 ? 1.5 : 2.1) : 2.5)));
-          const charBudget = inCard ? Math.min(200, rowBudget) : Math.max(28, rowBudget);
+          const rowBudget = Math.max(20, Math.round(charsPerLine * ((inCard || freeBelowPt < 16) ? (entry.actions.length >= 3 ? 1.5 : 2.0) : 2.5)));
+          const charBudget = (inCard || freeBelowPt < 16) ? Math.min(200, rowBudget) : Math.max(28, rowBudget);
           const budgetBucket = Math.round(charBudget / 30);
 
           for (const action of entry.actions) {
@@ -5832,11 +6302,14 @@ globalThis.SlideLingo = (() => {
                 id: "a" + uniqueAiMap.size,
                 text: action.sourceText,
                 mode: action.mode,
-                isInstruction: directions.test(action.sourceText) || explicit.test(action.sourceText) || isGlossaryHeading(action.sourceText),
+                isInstruction: directions.test(action.sourceText) || explicit.test(action.sourceText) || isGlossaryHeading(action.sourceText) || grammarExplanationRe.test(action.sourceText) || reviewNoteRe.test(action.sourceText) || reviewSentenceRe.test(action.sourceText),
                 boxWidthPt,
                 boxHeightPt,
                 fontSizePt,
                 inCard,
+                freeBelowPt,
+                tight,
+                semanticRole: action.semanticRole || (isGlossaryHeading(action.sourceText) ? "heading" : "instruction"),
                 charBudget,
                 needsAiTriage: Boolean(action.needsAiTriage),
               });
@@ -5892,6 +6365,9 @@ globalThis.SlideLingo = (() => {
       directions.test(action?.sourceText) ||
       explicit.test(action?.sourceText) ||
       isGlossaryHeading(action?.sourceText) ||
+      grammarExplanationRe.test(action?.sourceText) ||
+      reviewNoteRe.test(action?.sourceText) ||
+      reviewSentenceRe.test(action?.sourceText) ||
       /^lesson\s*\d+/i.test(action?.sourceText)
     );
 
@@ -6061,7 +6537,7 @@ globalThis.LessonSummary = (() => {
   const P = "http://schemas.openxmlformats.org/presentationml/2006/main";
   const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
   const PT = 12700;
-  const MAX_FILE = 60 * 1024 * 1024;
+  const MAX_FILE = 600 * 1024 * 1024;
   const parser = new DOMParser();
 
   // Palette chuẩn Blue (#1E40AF) + Pink (#DB2777) theo esl-lesson-summary-vi
@@ -7268,7 +7744,7 @@ globalThis.LessonSummary = (() => {
   }
 
   async function extractDeck(fileObj) {
-    if (fileObj.size > MAX_FILE) throw new Error(`Tệp "${fileObj.name}" vượt giới hạn 60 MB.`);
+    if (fileObj.size > MAX_FILE) throw new Error(`Tệp "${fileObj.name}" vượt giới hạn 600 MB.`);
     const buf = await fileObj.arrayBuffer();
     if (/\.pdf$/i.test(fileObj.name)) return extractFromPdf(buf, fileObj.name);
     if (/\.pptx$/i.test(fileObj.name)) return extractFromPptx(buf, fileObj.name);
@@ -11207,7 +11683,7 @@ globalThis.PptxCompressor = (() => {
 
     const origSize = rawBuf.byteLength;
     onProgress?.("Đang kiểm tra bảo mật & cấu trúc tệp...", 10);
-    globalThis.DocSecurity.inspectZipDirectory(rawBuf, 60 * 1024 * 1024, ["ppt/presentation.xml", "[Content_Types].xml"]);
+    globalThis.DocSecurity.inspectZipDirectory(rawBuf, 600 * 1024 * 1024, ["ppt/presentation.xml", "[Content_Types].xml"]);
     const zip = await JSZipLib.loadAsync(rawBuf);
     if (globalThis.SlideLingo?._internals?.sanitizeAllArchiveRels) {
       await globalThis.SlideLingo._internals.sanitizeAllArchiveRels(zip);
@@ -12007,8 +12483,8 @@ function setFiles(fileListLike, append = false) {
     if (!append) clearFileDisplay();
     error(
       appMode === "slides"
-        ? "Hãy chọn một hoặc nhiều file .pptx hợp lệ, tối đa 60 MB mỗi tệp."
-        : "Hãy chọn một hoặc nhiều tệp .pptx hoặc .pdf hợp lệ, tối đa 60 MB mỗi tệp."
+        ? "Hãy chọn một hoặc nhiều file .pptx hợp lệ, tối đa 600 MB mỗi tệp."
+        : "Hãy chọn một hoặc nhiều tệp .pptx hoặc .pdf hợp lệ, tối đa 600 MB mỗi tệp."
     );
     return;
   }
@@ -12033,7 +12509,7 @@ function setFiles(fileListLike, append = false) {
   if (validIncoming.length < arr.length) {
     status(
       "Đã lọc danh sách tệp",
-      `Đã nạp ${validIncoming.length}/${arr.length} tệp hợp lệ (bỏ qua ${arr.length - validIncoming.length} tệp không đúng định dạng hoặc quá 60 MB).`,
+      `Đã nạp ${validIncoming.length}/${arr.length} tệp hợp lệ (bỏ qua ${arr.length - validIncoming.length} tệp không đúng định dạng hoặc quá 600 MB).`,
       0
     );
   }
@@ -12519,11 +12995,12 @@ $("form").addEventListener("submit",async event=>{
             const usrPrompt = [
               `Target: ${targetLabel} (${tgtCode}). Batch ${slideNumber}/${totalSlides}.`,
               `Rules:`,
-              `1. keepEnglish=true for dialogues (A:/B:), fill-in-the-blank drills (1____), MCQ options (a./b./c.), IPA /.../, standalone example sentences, key expression phrase lists, isolated vocab words, game titles, and wrap-up/thanks closing text. NEVER keepEnglish=true for True/False statements, headings (CONVERSATION, PAIR WORK, Key expressions: ...), lead-ins (Your plans are to:), Student A/B role-play prompts, objectives, or directions.`,
-              `2. translation: natural & concise ${targetLabel}, strictly <= maxCh chars when card=true so narrow cards never overflow.`,
-              `3. mode: "paren" (short heading/button), "inline" (fits same line), or "newline" (sentences, bullets, tight cards).`,
-              `4. Preserve "..." English patterns (translate [placeholders]) and IPA /.../. Plain text only.`,
-              `Items: ${JSON.stringify(pending.map(p => ({ id: p.id, text: p.text, card: Boolean(p.inCard), maxCh: p.charBudget, mode: p.mode })))}`,
+              `1. ALWAYS translate (keepEnglish=false) these 5 groups: (1) Titles/Headings (CONVERSATION, PAIR WORK, Key expressions:, Wrap-up), (2) Lesson instructions & grammar/theory explanations ("We use...", "It gives...", rules), (3) Interactive/practice prompts (Let's talk, Student A/B, role-play), (4) Exercise prompts/scenarios/T-F statements, (5) Review, notes, tips, corrections & reminders (Note:, Tip:, Remember:, In today's lesson...).`,
+              `2. ONLY keepEnglish=true for: dialogues (A:/B:), fill-in-the-blank drills (1____), MCQ options (a./b./c.), standalone example sentences, key expression phrase lists, isolated vocab words, game titles, and pure Thank-you closing text.`,
+              `3. When tight=true, card=true, or freeBelowPt < 28: produce ultra-concise ${targetLabel} strictly <= maxCh chars so zero overlap occurs.`,
+              `4. mode: "paren" (short heading/label), "inline" (short line or tight space), or "newline" (titles, sentences, prompts).`,
+              `5. Preserve "..." quoted patterns/keywords ("always"), [placeholders] (translate description inside if needed), and IPA /.../. Plain text only.`,
+              `Items: ${JSON.stringify(pending.map(p => ({ id: p.id, text: p.text, card: Boolean(p.inCard), tight: Boolean(p.tight), freeBelowPt: p.freeBelowPt, role: p.semanticRole, maxCh: p.charBudget, mode: p.mode })))}`,
             ].join("\n");
 
             const maxTokens = Math.min(4096, Math.max(600, pending.length * 95));

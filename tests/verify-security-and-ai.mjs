@@ -1400,11 +1400,11 @@ await test("Kiểm thử đối chiếu bộ quy tắc 24 slide thực tế (BE1
   assert.ok(s6.includes("(分類)") && s6.includes("(肯定文)") && !s6.includes("JA:I am working"), "Slide 6: chỉ dịch hàng/cột tiêu đề bảng ngữ pháp");
   assert.ok(s7.includes("(肯定文)") && s7.includes("(否定文)"), "Slide 7: dịch Positive / Negative trong thanh tiêu đề bảng");
 
-  // Slide 9: Cyan heading + Formula + Examples label ONLY; skip We use..., It gives..., and 🔹 sentences
+  // Slide 9: Cyan heading + Dark-blue theory ("We use...", "It gives...") + Formula & Examples labels; skip 🔹 examples
   const s9 = await slideXml(9);
   assert.ok(s9.includes("JA:Using 「Always」 in Present Continuous for Annoyance"), "Slide 9: dịch tiêu đề cyan & giữ 「Always」");
   assert.ok(s9.includes("(公式)") && s9.includes("(例文)"), "Slide 9: dịch Formula (公式) & Examples (例文)");
-  assert.ok(!s9.includes("JA:We use") && !s9.includes("JA:It gives"), "Slide 9: lược bỏ giải thích 'We use...' và 'It gives...'");
+  assert.ok(s9.includes("JA:We use") && s9.includes("JA:It gives"), "Slide 9: dịch nội dung giải thích ngữ pháp 'We use...' và 'It gives...'");
   assert.ok(!s9.includes("JA:🔹"), "Slide 9: lược bỏ các câu ví dụ có biểu tượng 🔹");
 
   // Slides 11, 12, 13, 16: Pruned grids/chips/phrases/forms matching real slide order
@@ -1433,14 +1433,13 @@ await test("Kiểm thử đối chiếu bộ quy tắc 24 slide thực tế (BE1
   const s20 = await slideXml(20);
   assert.ok(s20.includes("(アンケート調査をしましょう！)") && s20.includes("JA:Work in pairs"), "Slide 20: dịch 'Making a survey!' & các dòng hướng dẫn");
 
-  // Slides 22, 23, 24: Wrap-up & THANKS -> 0 translations and 0 warnings
-  for (const n of [22, 23, 24]) {
-    const sx = await slideXml(n);
-    assert.ok(!sx.includes('descr="sl:ja"'), `Slide ${n}: không được chèn bất kỳ bản dịch nào`);
-    assert.ok(!sx.includes("JA:") && !sx.includes("ありがとうございました") && !sx.includes("まとめ"), `Slide ${n}: không dịch Wrap-up / Assignment / THANKS`);
-    const hasEmptyWarn = out.report.warnings.some(w => w.number === n && w.text.includes("Chưa nhận diện"));
-    assert.ok(!hasEmptyWarn, `Slide ${n}: không được phát sinh cảnh báo 'Chưa nhận diện được nội dung cần dịch'`);
-  }
+  // Slide 22 (Wrap-up) được dịch; Slide 24 THANKS thuần cảm ơn vẫn được bỏ qua
+  const s22 = await slideXml(22);
+  assert.ok(s22.includes("まとめ") || s22.includes("JA:"), "Slide 22: dịch nội dung Wrap-up / Review");
+  const s24 = await slideXml(24);
+  assert.ok(!s24.includes('descr="sl:ja"') && !s24.includes("JA:") && !s24.includes("ありがとうございました"), "Slide 24: bỏ qua slide thuần Thank you");
+  const hasEmptyWarn24 = out.report.warnings.some(w => w.number === 24 && w.text.includes("Chưa nhận diện"));
+  assert.ok(!hasEmptyWarn24, "Slide 24: không phát sinh cảnh báo");
 
   // Strict 3-color audit across ALL translated runs in ALL 24 slides
   const ALLOWED_COLORS = new Set(["000000", "FFFFFF", "1D4ED8"]);
@@ -1470,6 +1469,249 @@ await test("Kiểm thử đối chiếu bộ quy tắc 24 slide thực tế (BE1
       .map(r => r.getElementsByTagNameNS(A, "srgbClr")[0]?.getAttribute("val"));
     assert.ok(trColors.length > 0 && trColors.every(c => c === "FFFFFF"), `Slide ${n} (nền tối/divider) phải dùng chữ dịch Trắng FFFFFF, thực tế: [${trColors.join(",")}]`);
   }
+});
+
+await test("Slide 9 (Giải thích ngữ pháp + Xóa dòng rỗng + Anti-Overlap): dịch cả tiêu đề Cyan và lý thuyết xanh đậm, đẩy Examples không chồng chéo", async () => {
+  const s9Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="CyanTitle"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(20)}" y="${emu(18)}"/><a:ext cx="${emu(720)}" cy="${emu(34)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2200" b="1"><a:solidFill><a:srgbClr val="00C8FF"/></a:solidFill></a:rPr><a:t>Using &quot;Always&quot; in Present Continuous for Annoyance</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="TheoryBox"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(20)}" y="${emu(62)}"/><a:ext cx="${emu(900)}" cy="${emu(112)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1800"><a:solidFill><a:srgbClr val="1B4965"/></a:solidFill></a:rPr><a:t>We use &quot;always&quot; + present continuous to talk about actions that happen too often and can be annoying.</a:t></a:r></a:p>
+          <a:p><a:endParaRPr sz="1800"/></a:p>
+          <a:p><a:r><a:rPr sz="1800"><a:solidFill><a:srgbClr val="1B4965"/></a:solidFill></a:rPr><a:t>It gives the idea of complaining or frustration.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="ExamplesBox"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(160)}" y="${emu(180)}"/><a:ext cx="${emu(680)}" cy="${emu(190)}"/></a:xfrm><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1800" b="1"/><a:t>💡 Formula: Subject + am/ is/ are + always + V-ing + object.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1600" b="1"/><a:t>Examples:</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1500"/><a:t>🔹 She is always coming late to meetings.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1500"/><a:t>🔹 Why are you always complaining about the schedule?</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const out = await SlideLingo.convert(await makeSingleSlidePptx(s9Xml), "vi", async text => `VN:${text}`);
+  assert.equal(out.report.notes, 0, "100% bản dịch phải ở trên mặt slide (notes=0)");
+  const logs = SlideLingo.lastLayoutLog || [];
+  assert.ok(logs.length === 1 && logs[0].collisions.length === 0, `Slide 9 không được còn va chạm: ${JSON.stringify(logs)}`);
+
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const resXml = await outZip.file("ppt/slides/slide1.xml").async("string");
+  const P = "http://schemas.openxmlformats.org/presentationml/2006/main";
+  const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  const doc = new slEnv.DOMParser().parseFromString(resXml, "application/xml");
+  const sps = Array.from(doc.getElementsByTagNameNS(P, "sp"));
+  const getBox = name => {
+    const el = sps.find(s => s.getElementsByTagNameNS(P, "cNvPr")[0]?.getAttribute("name") === name);
+    return {
+      el,
+      text: el?.textContent || "",
+      y: Number(el.getElementsByTagNameNS(A, "off")[0].getAttribute("y")) / PT,
+      h: Number(el.getElementsByTagNameNS(A, "ext")[0].getAttribute("cy")) / PT,
+    };
+  };
+  const cyanBox = getBox("CyanTitle");
+  const theory = getBox("TheoryBox");
+  const examples = getBox("ExamplesBox");
+  assert.ok(cyanBox.text.includes('VN:Using "Always" in Present Continuous for Annoyance'), `Phải dịch tiêu đề Cyan, thực tế: ${cyanBox.text}`);
+  assert.ok(theory.text.includes("VN:We use") && theory.text.includes('"always"'), `Phải dịch câu giải thích 'We use...' và giữ từ khóa "always", thực tế: ${theory.text}`);
+  assert.ok(theory.text.includes("VN:It gives the idea of complaining or frustration."), `Phải dịch câu giải thích 'It gives...', thực tế: ${theory.text}`);
+  assert.ok(examples.text.includes("(Công thức)") && examples.text.includes("(Ví dụ)"), `Phải dịch nhãn Formula & Examples, thực tế: ${examples.text}`);
+  assert.ok(!examples.text.includes("VN:🔹"), `Phải giữ nguyên các câu ví dụ có 🔹, thực tế: ${examples.text}`);
+  assert.ok(theory.y + theory.h <= examples.y + 1, `TheoryBox (${(theory.y + theory.h).toFixed(1)}) không được đè lên ExamplesBox (${examples.y.toFixed(1)})`);
+  const emptyParas = Array.from(theory.el.getElementsByTagNameNS(A, "p")).filter(p => !p.textContent.trim());
+  assert.equal(emptyParas.length, 0, "Đoạn <a:p> rỗng xen giữa phải được gộp gọn bằng spcBef");
+  const theoryTrColors = Array.from(theory.el.getElementsByTagNameNS(A, "r"))
+    .filter(r => r.getElementsByTagNameNS(A, "rPr")[0]?.getAttribute("lang") === "vi-VN")
+    .map(r => r.getElementsByTagNameNS(A, "srgbClr")[0]?.getAttribute("val"));
+  assert.ok(theoryTrColors.length > 0 && theoryTrColors.every(c => c === "000000"), `Chữ dịch cho chữ gốc xanh đậm #1B4965 phải là Đen 000000, thực tế: [${theoryTrColors.join(",")}]`);
+});
+
+await test("Nhóm 5 (Review / Note / Tip / Wrap-up) + Guards (Slide 19 Read & match + Pure Thanks)", async () => {
+  const slideReview = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="WrapTitle"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(25)}"/><a:ext cx="${emu(300)}" cy="${emu(34)}"/></a:xfrm></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2400" b="1"/><a:t>Wrap-up</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="ReviewList"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(75)}"/><a:ext cx="${emu(840)}" cy="${emu(260)}"/></a:xfrm></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1600"/><a:t>In today's lesson, we learned how to use present continuous for annoyance.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1600"/><a:t>Note: Put always between be and the -ing verb.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1600"/><a:t>Tip: Sound polite when complaining to colleagues.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1600"/><a:t>Remember: Check subject-verb agreement before speaking.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1200"/><a:t>NOTE: These slides are for internal teacher use only.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const slideMatch = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="MatchTitle"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(25)}"/><a:ext cx="${emu(500)}" cy="${emu(34)}"/></a:xfrm></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2400" b="1"/><a:t>Use of Present Continuous Tense</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="MatchDir"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(70)}"/><a:ext cx="${emu(400)}" cy="${emu(28)}"/></a:xfrm></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600"/><a:t>Read and match.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="MatchCard1"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(120)}"/><a:ext cx="${emu(380)}" cy="${emu(60)}"/></a:xfrm><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1500"/><a:t>To describe activities happening at the moment of speaking</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="MatchCard2"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(460)}" y="${emu(120)}"/><a:ext cx="${emu(380)}" cy="${emu(60)}"/></a:xfrm><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1500"/><a:t>The company is doing well this year.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const slideThanks = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="Thanks"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(200)}" y="${emu(200)}"/><a:ext cx="${emu(500)}" cy="${emu(60)}"/></a:xfrm></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="3600" b="1"/><a:t>Thank you!</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="QA"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(200)}" y="${emu(270)}"/><a:ext cx="${emu(500)}" cy="${emu(40)}"/></a:xfrm></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2000"/><a:t>Do you have any questions?</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const buf = await makeMultiSlidePptx([slideReview, slideMatch, slideThanks]);
+
+  const out = await SlideLingo.convert(buf, "vi", async text => `VN:${text}`);
+  assert.equal(out.report.notes, 0, "Không được đẩy bản dịch sang Speaker Notes");
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const s1 = await outZip.file("ppt/slides/slide1.xml").async("string");
+  const s2 = await outZip.file("ppt/slides/slide2.xml").async("string");
+  const s3 = await outZip.file("ppt/slides/slide3.xml").async("string");
+
+  assert.ok(s1.includes("Tổng kết"), "Slide Review phải dịch tiêu đề Wrap-up");
+  assert.ok(s1.includes("VN:In today's lesson"), "Phải dịch câu tổng kết In today's lesson...");
+  assert.ok(s1.includes("VN:Note: Put always"), "Phải dịch Note: dành cho học viên");
+  assert.ok(s1.includes("VN:Tip: Sound polite"), "Phải dịch Tip:");
+  assert.ok(s1.includes("VN:Remember: Check"), "Phải dịch Remember:");
+  assert.ok(!s1.includes("VN:NOTE: These slides"), "Giữ nguyên ghi chú nội bộ của giáo viên NOTE: These slides...");
+
+  assert.ok(s2.includes("Cách dùng thì hiện tại tiếp diễn") && s2.includes("VN:Read and match."), "Slide Match phải dịch tiêu đề & đề bài Read and match");
+  assert.ok(!s2.includes("VN:To describe") && !s2.includes("VN:The company is doing"), "Không được dịch các thẻ ghép đôi (Slide 19)");
+
+  assert.ok(!s3.includes("VN:") && !out.report.warnings.some(w => w.number === 3), "Slide thuần Thank you! phải được bỏ qua và không phát sinh cảnh báo");
+});
+
+await test("Anti-Overlap Stress Test (CONVERSATION + PAIR WORK + Scenario hơi chồng mép & nhiều thẻ dày đặc): collisions = 0 & notes = 0", async () => {
+  const denseXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="ConvTitle"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(22)}"/><a:ext cx="${emu(260)}" cy="${emu(30)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2000" b="1"/><a:t>CONVERSATION</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="PairSub"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(48)}"/><a:ext cx="${emu(220)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800" b="1"/><a:t>PAIR WORK</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="ScenarioCard"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(72)}"/><a:ext cx="${emu(880)}" cy="${emu(96)}"/></a:xfrm><a:solidFill><a:srgbClr val="F8FAFC"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1500" b="1"/><a:t>Scenario: Enhancing cross-team collaboration after a company reorganization</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Situation: Two project teams are struggling to communicate clearly during weekly status updates and missed key deadlines.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="StudentACard"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(174)}"/><a:ext cx="${emu(420)}" cy="${emu(220)}"/></a:xfrm><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1600" b="1"/><a:t>Student A</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Your role is to suggest practical solutions and ask follow-up questions about timeline commitments.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Your plans are to:</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Propose a weekly joint standup meeting every Monday morning.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Ask what tools would make shared progress tracking much clearer.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="6" name="StudentBCard"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(500)}" y="${emu(174)}"/><a:ext cx="${emu(420)}" cy="${emu(220)}"/></a:xfrm><a:solidFill><a:srgbClr val="DBEAFE"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1600" b="1"/><a:t>Student B</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Your role is to describe concrete actions your team can deliver right away.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Your plans are to:</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>Share the updated roadmap and assign a single coordinator per milestone.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="7" name="BottomTip"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(415)}"/><a:ext cx="${emu(880)}" cy="${emu(68)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400"/><a:t>Present your agreed action plan to the class after finishing the role-play practice.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const out = await SlideLingo.convert(
+    await makeSingleSlidePptx(denseXml),
+    "ja",
+    async text => `JA:${text}（詳細で丁寧なビジネス表現の日本語翻訳テキストを追加確認します）`
+  );
+  assert.equal(out.report.notes, 0, "Tuyệt đối không được đẩy bản dịch xuống Speaker Notes khi slide chật");
+  const logs = SlideLingo.lastLayoutLog || [];
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].collisions.length, 0, `Không được còn bất kỳ va chạm nào trên slide dày đặc: ${JSON.stringify(logs[0].collisions)}`);
+
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const resXml = await outZip.file("ppt/slides/slide1.xml").async("string");
+  assert.ok(resXml.includes("会話") && resXml.includes("ペアワーク") && resXml.includes("JA:Scenario:") && resXml.includes("学生A"), "Đủ bản dịch cho tiêu đề và thẻ vai trò");
+});
+
+await test("Giới hạn dung lượng tệp tải lên tối đa 600 MB cho cả DocSecurity, Tool 1 (SlideLingo), Tool 2 (LessonSummary) & bộ nén PPTX", async () => {
+  const expected600Mb = 600 * 1024 * 1024;
+  assert.equal(SlideLingo.MAX_FILE, expected600Mb, "SlideLingo.MAX_FILE phải bằng 600 MB");
+  assert.match(html, /const MAX_ENTRY_BYTES = 600 \* 1024 \* 1024;/, "DocSecurity.MAX_ENTRY_BYTES phải đạt 600 MB");
+  assert.match(html, /const MAX_TOTAL_BYTES = 1800 \* 1024 \* 1024;/, "DocSecurity.MAX_TOTAL_BYTES phải đạt 1800 MB");
+  assert.match(html, /function inspectZipDirectory\(buffer, maxFileBytes = 600 \* 1024 \* 1024/, "inspectZipDirectory mặc định 600 MB");
+  assert.match(html, /const MAX_FILE = 600 \* 1024 \* 1024;/, "LessonSummary.MAX_FILE phải bằng 600 MB");
+  assert.match(html, /inspectZipDirectory\(rawBuf, 600 \* 1024 \* 1024/, "compressPptxFile phải cho phép tối đa 600 MB");
+  assert.ok(html.includes("tối đa 600 MB mỗi tệp") && html.includes("hoặc quá 600 MB"), "Thông báo UI phải hiển thị mức 600 MB");
+  assert.ok(!/\b60\s*MB\b/.test(html), "Không được còn sót chuỗi giới hạn cũ 60 MB trong 2mybebi.html");
 });
 
 console.log(`\nHoàn tất: ${passed}/${passed} bài kiểm thử đã PASS!\n`);
