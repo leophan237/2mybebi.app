@@ -360,12 +360,19 @@ await test("DocSecurity.inspectZipDirectory chấp nhận PPTX sạch và chặn
   const names = DocSecurity.inspectZipDirectory(cleanBuf, 60 * 1024 * 1024, ["ppt/presentation.xml", "[Content_Types].xml"]);
   assert.ok(names.has("ppt/presentation.xml"));
 
+  const cleanWithChartBuf = await buildSyntheticPptxBuffer({
+    "ppt/embeddings/Microsoft_Excel_Worksheet.xlsx": "safe-xlsx-bytes",
+  });
+  const chartNames = DocSecurity.inspectZipDirectory(cleanWithChartBuf, 60 * 1024 * 1024, ["ppt/presentation.xml", "[Content_Types].xml"]);
+  assert.ok(chartNames.has("ppt/embeddings/Microsoft_Excel_Worksheet.xlsx"));
+
   for (const badPath of [
     "ppt/vbaProject.bin",
     "ppt/vbaData.xml",
     "_xmlsignatures/sig1.xml",
     "ppt/activeX/activeX1.xml",
     "ppt/embeddings/oleObject1.bin",
+    "ppt/embeddings/macro.xlsm",
     "ppt/media/payload.exe",
   ]) {
     const poisoned = await buildSyntheticPptxBuffer({ [badPath]: "evil-bytes" });

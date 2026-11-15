@@ -2028,7 +2028,13 @@ globalThis.DocSecurity = (() => {
   const MAX_TOTAL_BYTES = 1800 * 1024 * 1024;
   const utf8Decoder = new TextDecoder("utf-8", { fatal: true });
 
-  const FORBIDDEN_ZIP_RE = /(?:^|\/)(?:vbaProject\.bin|vbaData\.xml|activeX\/|embeddings\/|_xmlsignatures\/)|(?:\.(?:exe|dll|bat|cmd|ps1|psm1|vbs|vbe|js|jse|wsf|wsh|hta|lnk|scr|msi|msp|com|pif|reg|ocx))$/i;
+  const FORBIDDEN_ZIP_RE = /(?:^|\/)(?:vbaProject\.bin|vbaData\.xml|activeX\/|_xmlsignatures\/)|(?:\.(?:exe|dll|bat|cmd|ps1|psm1|vbs|vbe|js|jse|wsf|wsh|hta|lnk|scr|msi|msp|com|pif|reg|ocx|xlsm|xlsb|docm|dotm|pptm|potm|ppam|sldm))$/i;
+  const SAFE_EMBEDDING_RE = /(?:^|\/)embeddings\/(?:$|[^/]+\.(?:xlsx|docx|pptx)$)/i;
+  function isForbiddenZipEntry(name) {
+    if (FORBIDDEN_ZIP_RE.test(name)) return true;
+    if (/(?:^|\/)embeddings\//i.test(name) && !SAFE_EMBEDDING_RE.test(name)) return true;
+    return false;
+  }
   const UNSAFE_REL_TYPES = /(?:\/vbaProject|\/oleObject|\/control|\/package|\/attachedTemplate|\/frame|\/subDocument|\/ws_xml|\/digitalSignature)$/i;
   const SECRET_PATTERNS = [
     /\bsk-or-v1-[A-Za-z0-9_-]{12,}\b/g,
@@ -2157,7 +2163,7 @@ globalThis.DocSecurity = (() => {
       ) {
         throw Error("Tệp chứa đường dẫn không hợp lệ (nguy cơ Zip-Slip).");
       }
-      if (FORBIDDEN_ZIP_RE.test(name)) {
+      if (isForbiddenZipEntry(name)) {
         throw Error(`Tệp chứa thành phần không an toàn hoặc có khả năng thực thi mã (${name}) nên đã bị chặn.`);
       }
       names.add(name);
