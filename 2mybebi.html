@@ -319,6 +319,222 @@ main{
   text-transform:uppercase;
   color:var(--muted)
 }
+/* === Versioned Changelog Trigger Pill & Floating Glass Notification Box === */
+.changelog-pill{
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3.5px 10px;
+  border-radius:999px;
+  background:rgba(255,252,248,.66);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(223,197,179,.75);
+  color:var(--ink);
+  font:700 11px/1.2 var(--sans);
+  cursor:pointer;
+  transition:transform .18s ease,border-color .18s ease,background-color .18s ease,box-shadow .18s ease
+}
+.changelog-pill:hover{
+  border-color:var(--accent);
+  background:rgba(255,253,249,.94);
+  transform:translateY(-1px)
+}
+.changelog-pill[aria-expanded="true"]{
+  border-color:var(--accent);
+  background:rgba(255,253,249,.96);
+  box-shadow:0 0 0 3px rgba(184,74,98,.14)
+}
+body[data-mode="summary"] .changelog-pill{
+  background:rgba(255,248,251,.72);
+  border-color:rgba(236,194,208,.8)
+}
+body[data-mode="summary"] .changelog-pill[aria-expanded="true"]{
+  box-shadow:0 0 0 3px rgba(200,90,124,.15)
+}
+.changelog-pill-dot{
+  width:6.5px;
+  height:6.5px;
+  border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 0 3px rgba(184,74,98,.2);
+  flex-shrink:0
+}
+.changelog-pill-ver{
+  color:var(--accent);
+  font-variant-numeric:tabular-nums;
+  font-weight:800
+}
+.changelog-pill-sep{
+  opacity:.45;
+  color:var(--muted)
+}
+.changelog-pill-label{
+  color:var(--muted);
+  font-weight:650
+}
+.changelog-layer{
+  position:fixed;
+  inset:0;
+  z-index:90
+}
+.changelog-scrim{
+  position:fixed;
+  inset:0;
+  background:rgba(53,35,27,.12);
+  backdrop-filter:blur(1.5px);
+  -webkit-backdrop-filter:blur(1.5px);
+  opacity:0;
+  transition:opacity .18s ease
+}
+.changelog-layer.is-open .changelog-scrim{opacity:1}
+.changelog-card{
+  position:fixed;
+  top:60px;
+  left:24px;
+  width:min(450px,calc(100vw - 28px));
+  max-height:min(540px,calc(100dvh - 88px));
+  display:flex;
+  flex-direction:column;
+  background:rgba(255,252,248,.97);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  border:1px solid rgba(223,197,179,.86);
+  border-radius:20px;
+  box-shadow:0 24px 52px -18px rgba(74,42,28,.26),0 8px 20px -8px rgba(184,74,98,.14),inset 0 1px 0 rgba(255,255,255,.92);
+  opacity:0;
+  transform:translateY(-6px) scale(.985);
+  transform-origin:top left;
+  transition:opacity .18s ease,transform .2s cubic-bezier(.22,1,.36,1);
+  overflow:hidden
+}
+.changelog-layer.is-open .changelog-card{
+  opacity:1;
+  transform:translateY(0) scale(1)
+}
+body[data-mode="summary"] .changelog-card{
+  background:rgba(255,249,252,.98);
+  border-color:rgba(236,194,208,.9);
+  box-shadow:0 24px 52px -18px rgba(200,90,124,.24),0 8px 20px -8px rgba(200,90,124,.14),inset 0 1px 0 rgba(255,255,255,.94)
+}
+.changelog-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 16px 12px;
+  border-bottom:1px dashed rgba(222,195,177,.65)
+}
+.changelog-eyebrow{
+  margin:0 0 2px;
+  font:750 10px/1.2 var(--sans);
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--accent)
+}
+.changelog-title{
+  margin:0;
+  font:700 18px/1.2 var(--display);
+  color:var(--ink);
+  letter-spacing:-.015em
+}
+.changelog-close-btn{
+  appearance:none;
+  border:1px solid rgba(223,197,179,.75);
+  background:rgba(255,252,248,.75);
+  color:var(--muted);
+  border-radius:999px;
+  padding:4.5px 10px;
+  font:700 11px/1.2 var(--sans);
+  cursor:pointer;
+  flex-shrink:0;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease
+}
+.changelog-close-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:rgba(250,235,231,.82)
+}
+.changelog-list{
+  padding:14px 16px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  display:flex;
+  flex-direction:column;
+  gap:14px
+}
+.changelog-list::-webkit-scrollbar{width:6px}
+.changelog-list::-webkit-scrollbar-track{background:transparent;margin:6px 0}
+.changelog-list::-webkit-scrollbar-thumb{background:rgba(184,74,98,.24);border-radius:999px}
+.changelog-list::-webkit-scrollbar-thumb:hover{background:rgba(184,74,98,.42)}
+.changelog-entry{
+  position:relative;
+  padding:11px 13px;
+  border-radius:14px;
+  background:rgba(255,255,255,.62);
+  border:1px solid rgba(227,206,190,.62)
+}
+.changelog-entry.is-latest{
+  background:rgba(250,235,231,.58);
+  border-color:rgba(184,74,98,.32)
+}
+body[data-mode="summary"] .changelog-entry.is-latest{
+  background:rgba(253,238,243,.68);
+  border-color:rgba(200,90,124,.34)
+}
+.changelog-entry-meta{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px
+}
+.changelog-ver-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:2px 8px;
+  border-radius:999px;
+  background:rgba(184,74,98,.11);
+  color:var(--accent);
+  font:800 11px/1.3 var(--sans);
+  font-variant-numeric:tabular-nums
+}
+.changelog-latest-tag{
+  display:inline-flex;
+  align-items:center;
+  padding:2px 7px;
+  border-radius:999px;
+  background:var(--accent);
+  color:#ffffff;
+  font:700 10.2px/1.3 var(--sans);
+  letter-spacing:.02em
+}
+.changelog-date{
+  margin-left:auto;
+  font:600 11px/1.3 var(--sans);
+  color:var(--muted);
+  font-variant-numeric:tabular-nums
+}
+.changelog-entry-title{
+  font:700 13.4px/1.35 var(--sans);
+  margin:6px 0 5px;
+  color:var(--ink)
+}
+.changelog-entry-items{
+  margin:0;
+  padding-left:16px;
+  font-size:12.3px;
+  line-height:1.48;
+  color:var(--muted)
+}
+.changelog-entry-items li + li{margin-top:3px}
+.changelog-foot{
+  padding:9px 16px;
+  border-top:1px dashed rgba(222,195,177,.55);
+  font-size:11.2px;
+  color:var(--muted);
+  background:rgba(244,234,219,.32)
+}
 h1{
   margin:0;
   font:600 clamp(34px,3.6vw,48px)/1.12 var(--display);
@@ -1706,6 +1922,7 @@ body[data-mode="summary"] .ai-mode-switch input{accent-color:#c85a7c}
   }
   .left-rail{display:contents}
   .intro{order:1;padding:2px 2px 0;max-width:100%;min-width:0}
+  .hero-brand-head{justify-content:center;flex-wrap:wrap}
   .workbench{order:2;padding:16px 14px;border-radius:18px;width:100%;max-width:100%;min-width:0}
   .sticker-field.chill-card{order:3;width:100%;max-width:100%;min-width:0;overflow:hidden}
   .chill-head{width:100%;min-width:0;gap:8px}
@@ -1713,6 +1930,7 @@ body[data-mode="summary"] .ai-mode-switch input{accent-color:#c85a7c}
 }
 @media(max-width:640px){
   .hero-brand-head{flex-wrap:wrap;gap:6px 10px}
+  .changelog-card{left:12px!important;right:12px!important;top:58px!important;width:auto;max-height:calc(100dvh - 76px);transform-origin:top center}
   .brand{font-size:clamp(24px,7.2vw,32px)}
   .brand-sep{display:none}
   .hero-inline-pill{max-width:100%;white-space:normal}
@@ -1814,6 +2032,12 @@ body[data-mode="summary"] .ai-mode-switch input{accent-color:#c85a7c}
         <span class="brand">✿ 2mybebi<em>.</em></span>
         <span class="brand-sep" aria-hidden="true">·</span>
         <span class="brand-subtag">AI Studio</span>
+        <button type="button" class="changelog-pill" id="changelog-trigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="changelog-drawer" title="Xem nhật ký cập nhật phiên bản">
+          <span class="changelog-pill-dot" id="changelog-unread-dot" hidden aria-hidden="true"></span>
+          <span class="changelog-pill-ver" id="changelog-pill-ver">v1.6.0</span>
+          <span class="changelog-pill-sep" aria-hidden="true">·</span>
+          <span class="changelog-pill-label">Nhật ký</span>
+        </button>
       </div>
       <h1 id="hero-title">Trợ lý <em>bài giảng</em></h1>
       <p class="hero-subtitle">Chuyển đổi slide song ngữ và biên soạn tóm tắt bài học tự động.</p>
@@ -2004,6 +2228,20 @@ body[data-mode="summary"] .ai-mode-switch input{accent-color:#c85a7c}
     </div>
   </section>
 </main>
+<div class="changelog-layer" id="changelog-layer" hidden>
+  <div class="changelog-scrim" id="changelog-scrim" aria-hidden="true"></div>
+  <aside class="changelog-card" id="changelog-drawer" role="dialog" aria-modal="false" aria-labelledby="changelog-title">
+    <div class="changelog-head">
+      <div>
+        <p class="eyebrow changelog-eyebrow">NHẬT KÝ PHÁT HÀNH</p>
+        <h3 class="changelog-title" id="changelog-title">Cập nhật phiên bản</h3>
+      </div>
+      <button type="button" class="changelog-close-btn" id="changelog-close-btn" aria-label="Ẩn hộp thông báo cập nhật">Ẩn ✕</button>
+    </div>
+    <div class="changelog-list" id="changelog-list"></div>
+    <div class="changelog-foot" id="changelog-foot">Ghi nhận tự động theo từng phiên bản cập nhật &amp; deploy mới.</div>
+  </aside>
+</div>
 <script>
 /*!
 
@@ -2437,9 +2675,16 @@ globalThis.SlideLingo = (() => {
   const formulaLineRe = /^(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF🔹💡📌📞•\-–—]+\s*)?(formula|form|structure)\s*:\s*(.+)$/iu;
   const sectionTopicLineRe = /^(?:vocabulary(?:\s+recap|\s+extension)?|grammar(?:\s+recap|\s+extension)?|pronunciation(?:\s+recap|\s+extension)?|business\s+communication|speaking|listening|reading|writing)\s*:\s*\S/i;
   const numberedConceptRe = /^(?:\d+[.)]\s*|[•\-–—]\s*)?(?:intonation|stress|word\s+stress|sentence\s+stress|rising\s+intonation|falling\s+intonation|linking|connected\s+speech|present\s+continuous|present\s+simple|past\s+simple|future)[^:]{0,35}:\s+\S/i;
-  const grammarExplanationRe = /^(?:we\s+(?:use|can\s+use|often\s+use|always\s+use|form|make)\b|it\s+(?:gives|shows|means|expresses|describes|is\s+used|refers|helps|indicates)\b|this\s+(?:tense|form|structure|expression|pattern|phrase|rule|shows|means|is\s+used)\b|use\s+(?:the\s+)?(?:present|past|future|[a-z]+\s+tense)\b|used\s+(?:to\s+(?:talk|describe|express|show|ask|indicate)|for\s+(?:talking|describing|expressing|actions|things))\b|in\s+(?:english|business|spoken\s+english|written\s+english|formal|informal)\b|(?:rising|falling)\s+intonation\s+(?:is|shows)\b|(?:word|sentence)\s+stress\s+(?:is|falls|helps)\b|(?:these|this)\s+(?:words?|verbs?|phrases?|expressions?)\s+(?:are|is)\s+(?:used|often|usually)\b)/i;
+  const grammarExplanationRe = /^(?:we\s+(?:use|can\s+use|often\s+use|always\s+use|form|make)\b|it\s+(?:gives|shows|means|expresses|describes|is\s+used|refers|helps|indicates)\b|this\s+(?:tense|form|structure|expression|pattern|phrase|rule|shows|means|is\s+used)\b|use\s+(?:the\s+)?(?:present|past|future|[a-z]+\s+tense)\b|used\s+(?:to\s+(?:talk|describe|express|show|ask|indicate)|for\s+(?:talking|describing|expressing|actions|things))\b|to\s+(?:ask|talk|describe|express|show|explain|indicate)\s+(?:about|how|what|where|when|why|whether|distance|actions?|events?|situations?|habits?|plans?|feelings?|annoyance|possession|means)\b|in\s+(?:english|business|spoken\s+english|written\s+english|formal|informal)\b|(?:rising|falling)\s+intonation\s+(?:is|shows)\b|(?:word|sentence)\s+stress\s+(?:is|falls|helps)\b|(?:these|this)\s+(?:words?|verbs?|phrases?|expressions?)\s+(?:are|is)\s+(?:used|often|usually)\b)/i;
   const reviewNoteRe = /^(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF🔹💡📌⚠️📝✓✔•\-–—]+\s*)?(?:(?:important\s+|quick\s+)?(?:notes?|tips?)|remember|be\s+careful|careful|warning|caution|attention|(?:self[- ]?)?correction|review|summary|wrap[- ]?up|key\s+(?:points?|takeaways?)|takeaways?|reminder|check[- ]?list|checklist|hints?|recap|fix(?:\s+the\s+mistake)?)\s*:\s*\S/iu;
   const reviewSentenceRe = /^(?:in\s+today['’]s\s+lesson\b|today\s+we\s+(?:learned|practiced|practised|studied|reviewed|covered)\b|by\s+(?:now|the\s+end)\b|you\s+(?:have\s+learned|can\s+now|studied|learned)\b|i\s+can\s+(?:now\s+)?(?:use|make|ask|answer|talk|introduce|explain|understand|identify|describe|write|read|listen|speak)\b|let['’]s\s+review\b|remember\s+to\b|don['’]t\s+forget\s+to\b|be\s+careful\s+(?:with|not\s+to|when)\b|make\s+sure\s+(?:you|to)\b|be\s+sure\s+to\b|pay\s+attention\s+to\b|watch\s+out\s+for\b|check\s+your\b|correct\s+(?:the|any|each)\b|find\s+and\s+correct\b|homework\s*:|assignment\s*:)/iu;
+  const mediaTagPrefixRe = /^(?:\[(?:u\d+l\d+[^\]]*|[^\]]*\b(?:track|audio|cd|clip|recording)\b[^\]]*)\]|\((?:track|audio|cd)\s*[\w.:-]+\))\s*/i;
+  const discourseLeadRe = /^(?:[\u{1F300}-\u{1FAFF}\u2600-\u27BF🎧🗣️✍️👉▶️•\-–—]+\s*)*(?:(?:step|part|stage|round)\s*\d+[a-z]?\s*[:.)\-]\s*)?(?:(?:now|next|then|first|second|third|finally|after\s+that|afterwards|together)\s*[,:]?\s+)+/iu;
+  const interactiveQuestionPromptRe = /^(?:can\s+you\s+(?:add|find|think\s+of|name|guess|identify|spot|give|make|list|tell|see|notice|remember|match|sort|classify|correct|explain)\b[^?]{3,100}\?|what\s+(?:other\s+|more\s+)?(?:words?|phrases?|expressions?|examples?|differences?|patterns?|rules?)\s+(?:can\s+you|do\s+you)\b[^?]{0,80}\?)$/i;
+  const functionalLabelPatternRe = /^(asking\s+(?:about|for)\s+[^:]{2,55}|talking\s+about\s+[^:]{2,55}|expressing\s+[^:]{2,55}|giving\s+[^:]{2,55}|making\s+[^:]{2,55}|responding\s+to\s+[^:]{2,55}|answering\s+[^:]{2,55})\s*:\s*(\S.+)$/i;
+  const conceptColonExplainRe = /^([A-Z][A-Za-z0-9\s'’"“”/?&-]{1,42})\s*:\s+((?:to\s+)?(?:ask|talk|describe|express|show|indicate|explain|use|used|refer|mean|means|state)\b.+)$/i;
+  const stripMediaTagPrefix = text => String(text || "").replace(mediaTagPrefixRe, "").trim();
+  const stripForDirectiveMatch = text => stripMediaTagPrefix(text).replace(discourseLeadRe, "").trim();
 
   const GLOSSARY = {
     ja: {
@@ -2472,6 +2717,13 @@ globalThis.SlideLingo = (() => {
       "scenario": "シナリオ", "situation": "状況",
       "student a": "学生A", "student b": "学生B", "partner a": "パートナーA", "partner b": "パートナーB",
       "your plans are to:": "計画：", "your plans are to": "計画",
+      "objective": "学習目標", "structure": "構文",
+      "model": "モデル", "conversation model": "会話モデル", "activator": "アクティビティ",
+      "video watching": "動画視聴", "how to play": "遊び方",
+      "homework & lesson preparation check": "宿題・レッスン準備の確認",
+      "and we can": "そして、次のことができるようになりました",
+      "and we can …": "そして、次のことができるようになりました…",
+      "and we can...": "そして、次のことができるようになりました…",
     },
     vi: {
       "warm-up": "Khởi động", "warm up": "Khởi động",
@@ -2504,6 +2756,13 @@ globalThis.SlideLingo = (() => {
       "scenario": "Tình huống", "situation": "Bối cảnh",
       "student a": "Học viên A", "student b": "Học viên B", "partner a": "Bạn cặp A", "partner b": "Bạn cặp B",
       "your plans are to:": "Kế hoạch của bạn là:", "your plans are to": "Kế hoạch của bạn là",
+      "objective": "Mục tiêu", "structure": "Cấu trúc",
+      "model": "Mẫu", "conversation model": "Hội thoại mẫu", "activator": "Hoạt động",
+      "video watching": "Xem video", "how to play": "Cách chơi",
+      "homework & lesson preparation check": "Kiểm tra bài tập & chuẩn bị bài",
+      "and we can": "và chúng ta có thể",
+      "and we can …": "và chúng ta có thể…",
+      "and we can...": "và chúng ta có thể…",
     },
   };
 
@@ -2530,9 +2789,10 @@ globalThis.SlideLingo = (() => {
   }
 
   function eligible(text) {
-    return text.length >= 4 && /[A-Za-z]{3}/.test(text) && !teacher.test(text) && !answer.test(text) &&
+    const core = stripMediaTagPrefix(text);
+    return core.length >= 4 && /[A-Za-z]{3}/.test(core) && !teacher.test(text) && !answer.test(text) &&
       !/^(?:name|surname|hometown|nationality|based in|company|job|travel for work)\s*:/i.test(text) &&
-      !/https?:|www\.|\[(?:answers?|đáp\s*án|key|audio|video|teacher[^\]]*)\]/i.test(text) &&
+      !/https?:|www\.|\[(?:answers?|đáp\s*án|key|teacher[^\]]*)\]/i.test(core) &&
       !hasTargetScript(text);
   }
 
@@ -2664,7 +2924,8 @@ globalThis.SlideLingo = (() => {
   function isVocabDrillLabel(node, rect, paragraphs, context, picRects) {
     if (paragraphs.length !== 1) return false;
     const text = paragraphs[0];
-    if (isGlossaryHeading(text) || examplePrefix.test(text) || directions.test(text) || explicit.test(text)) return false;
+    const mTxt = stripForDirectiveMatch(text);
+    if (isGlossaryHeading(text) || examplePrefix.test(text) || directions.test(mTxt) || explicit.test(mTxt) || /^questions?\s+with\b/i.test(text)) return false;
     const words = text.split(/\s+/).filter(Boolean);
     if (words.length > 4 || text.length > 34 || /[.?!:;]$/.test(text)) return false;
     const phType = descendants(node, P, "ph")[0]?.getAttribute("type");
@@ -2709,6 +2970,31 @@ globalThis.SlideLingo = (() => {
       /\b(?:tense|verb|subject|object|auxiliary|continuous|simple|participle|grammar|intonation|stress|clause|formula|rule|usage|used (?:to|for)|gives the idea|annoying|frustration|complaining|mistake|error|avoid|correct(?:ion)?|remember|forget|summary|review|homework|assignment)\b/i.test(t);
   }
 
+  function bodyRunMetrics(bodyEl) {
+    if (!bodyEl) return { defSz: 0, defBold: false, maxSz: 0, hasBold18: false };
+    const lstStyle = child(bodyEl, A, "lstStyle");
+    const lvlDefs = lstStyle
+      ? Array.from(lstStyle.children)
+          .filter(c => c.namespaceURI === A && (/^lvl[1-9]pPr$/.test(c.localName) || c.localName === "defPPr"))
+          .map(c => child(c, A, "defRPr"))
+          .filter(Boolean)
+      : [];
+    const pDefs = children(bodyEl, A, "p")
+      .map(p => child(child(p, A, "pPr"), A, "defRPr"))
+      .filter(Boolean);
+    const defs = [...pDefs, ...lvlDefs];
+    const defSz = Math.max(0, ...defs.map(d => Number(d.getAttribute("sz")) || 0));
+    const defBold = defs.some(d => d.getAttribute("b") === "1");
+    const runs = descendants(bodyEl, A, "rPr");
+    const maxSz = Math.max(defSz, ...runs.map(r => Number(r.getAttribute("sz")) || defSz || 0));
+    const hasBold18 = runs.some(r => {
+      const sz = Number(r.getAttribute("sz")) || defSz;
+      const b = r.getAttribute("b");
+      return sz >= 1800 && (b === "1" || (b !== "0" && defBold));
+    }) || (defSz >= 1800 && defBold && !runs.length);
+    return { defSz, defBold, maxSz, hasBold18 };
+  }
+
   function classifyParagraph(text, pIndex, totalParas, node, context, hasPrimaryInstruction, boxIsExampleBlock) {
     if (!text || hasTargetScript(text)) return null;
 
@@ -2751,139 +3037,173 @@ globalThis.SlideLingo = (() => {
 
     if (!eligible(text) || text.length > 480) return null;
 
+    const cleanSource = stripMediaTagPrefix(text);
+    const matchText = stripForDirectiveMatch(text);
+    if (!cleanSource || hasTargetScript(cleanSource)) return null;
+
     const placeholder = descendants(node, P, "ph")[0]?.getAttribute("type");
     const isTitle = ["title", "ctrTitle"].includes(placeholder);
     const bodyEl = child(node, P, "txBody") || child(node, A, "txBody");
-    const runs = descendants(bodyEl, A, "rPr");
-    const isLarge = runs.some(r => Number(r.getAttribute("sz")) >= 2700);
+    const { maxSz, hasBold18 } = bodyRunMetrics(bodyEl);
+    const isLarge = maxSz >= 2700;
     const isTopBoldHeader = Boolean(
       context.inTopHeaderZone &&
       totalParas <= 2 &&
-      runs.some(r => Number(r.getAttribute("sz")) >= 1800 && r.getAttribute("b") === "1")
+      hasBold18
     );
     const pNodes = children(bodyEl, A, "p");
     const pNode = pNodes[pIndex];
     const algn = child(pNode, A, "pPr")?.getAttribute("algn");
     const isCentered = algn === "ctr" || placeholder === "ctrTitle";
-    const wc = text.split(/\s+/).filter(Boolean).length;
+    const wc = cleanSource.split(/\s+/).filter(Boolean).length;
 
-    // 2b. Tiêu đề UNIT X: TOPIC trên slide bìa (ví dụ "UNIT 2: COMPANY" -> "UNIT 2: COMPANY (会社)")
-    const unitMatch = text.match(/^unit\s*\d+\s*:\s*(.+)$/i);
+    // 2b. Tiêu đề UNIT X: TOPIC hoặc UNIT X. TOPIC trên slide bìa
+    const unitMatch = cleanSource.match(/^unit\s*\d+\s*(?:[:.–—-]\s*|\s+)(.+)$/i);
     if (unitMatch && context.cover) {
-      return { mode: "INLINE_APPEND", paren: true, sourceText: unitMatch[1].trim(), ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
+      const uTopic = unitMatch[1].trim();
+      if (uTopic.length <= 22) {
+        return { mode: "INLINE_APPEND", paren: true, sourceText: uTopic, ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
+      }
+      return { mode: "NEWLINE_AFTER", sourceText: uTopic, ratio: RF.titleRatioL, mustTranslate: true, semanticRole: "heading", forceNewline: true };
     }
 
-    // 2c. Nhãn "Objectives:" -> "Objectives (学習目標):"
-    if (/^(?:learning\s+)?objectives?\s*:$/i.test(text)) {
-      return { mode: "INLINE_LABEL_PAREN", sourceText: text.replace(/\s*:\s*$/, "").trim(), ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
+    // 2c. Nhãn đứng một mình "Objective:", "Objectives:", "Structure:", "Formula:", "Form:" -> chèn bản dịch trong ngoặc
+    if (/^(?:(?:learning\s+)?objectives?|structure|formula|form)\s*:$/i.test(cleanSource)) {
+      return { mode: "INLINE_LABEL_PAREN", sourceText: cleanSource.replace(/\s*:\s*$/, "").trim(), ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
+    }
+
+    // 2d. Nhãn chức năng có mẫu câu theo sau (ví dụ: "Asking about means of transportation: How do you go to ….?")
+    const fnMatch = !context.matchingExercise && !teacher.test(cleanSource) ? cleanSource.match(functionalLabelPatternRe) : null;
+    if (fnMatch) {
+      return { mode: "INLINE_LABEL_PAREN", sourceText: fnMatch[1].trim(), mustTranslate: true, semanticRole: "label" };
+    }
+
+    // 2e. Slide chuyển phần (01–05 + tên phần + chủ đề bên dưới): tên phần chèn inline để khỏi đè lên chủ đề bên dưới, còn chủ đề luôn dịch xuống dòng
+    if (context.sectionDivider && context.hasSectionSubtitle && (isGlossaryHeading(cleanSource) || heading.test(cleanSource))) {
+      return { mode: "INLINE_APPEND", paren: true, lockInline: true, sourceText: cleanSource, ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
+    }
+    if (context.sectionDivider && !isGlossaryHeading(cleanSource) && !heading.test(cleanSource) && totalParas <= 2 && cleanSource.length <= 140 && !/^0?[1-9]$/.test(cleanSource)) {
+      const ratio = maxSz >= 2400 ? RF.titleRatioL : RF.transRatio;
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, ratio, hasPattern: hasProtectedPattern(cleanSource), mustTranslate: true, semanticRole: "heading", forceNewline: true };
     }
 
     // 3. Tiêu đề Slide / Cover — luôn xuống dòng, bản dịch nhỏ hơn theo thứ bậc chữ
     if (
       (isTitle || isLarge || isTopBoldHeader) &&
-      text.length <= 120 &&
+      cleanSource.length <= 120 &&
       totalParas <= 3 &&
-      !isMonolingualDialogueOrDrill(text) &&
+      !isMonolingualDialogueOrDrill(cleanSource) &&
       (
-        isGlossaryHeading(text) ||
+        isGlossaryHeading(cleanSource) ||
         context.cover ||
-        heading.test(text) ||
-        /^(?:form of|use of|structure of|usage of|key expressions|using\s+(?:"[^"]+"|[^\s]{2,})\s+(?:tense|for|to|in)\b|(?:present|past|future)\s+(?:continuous|simple|perfect))/i.test(text) ||
+        heading.test(cleanSource) ||
+        /^(?:form of|use of|structure of|usage of|key expressions|using\s+(?:"[^"]+"|[^\s]{2,})\s+(?:tense|for|to|in)\b|(?:present|past|future)\s+(?:continuous|simple|perfect))/i.test(cleanSource) ||
         isTopBoldHeader
       ) &&
-      !/\s[?!].+/.test(text)
+      !/\s[?!].+/.test(cleanSource)
     ) {
-      const maxSz = Math.max(0, ...runs.map(r => Number(r.getAttribute("sz")) || 0));
       const ratio = maxSz >= 3600 || (!maxSz && isTitle) ? RF.titleRatioXL : maxSz >= 2400 ? RF.titleRatioL : RF.transRatio;
-      return { mode: "NEWLINE_AFTER", sourceText: text, ratio, mustTranslate: true, semanticRole: "heading", forceNewline: true };
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, ratio, mustTranslate: true, semanticRole: "heading", forceNewline: true };
     }
 
-    // 3b. Tiêu đề hoạt động/chuyên mục nằm trong GLOSSARY (Asking questions, Did you know ?, Making a survey!, Form of Present Continuous Tense…)
-    if (isGlossaryHeading(text)) {
-      if (/^(?:form of|use of|structure of|usage of|key expressions\s*:)/i.test(text)) {
-        return { mode: "NEWLINE_AFTER", sourceText: text, ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading", forceNewline: true };
+    // 3b. Tiêu đề hoạt động/chuyên mục nằm trong GLOSSARY (Asking questions, Did you know ?, Making a survey!, MODEL, ACTIVATOR…)
+    if (isGlossaryHeading(cleanSource)) {
+      if (/^(?:form of|use of|structure of|usage of|key expressions\s*:)/i.test(cleanSource)) {
+        return { mode: "NEWLINE_AFTER", sourceText: cleanSource, ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading", forceNewline: true };
       }
-      const useParen = /[?!]\s*$/.test(text);
-      return { mode: "INLINE_APPEND", paren: useParen, sourceText: text, ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
+      const useParen = /[?!]\s*$/.test(cleanSource);
+      return { mode: "INLINE_APPEND", paren: useParen, sourceText: cleanSource, ratio: RF.transRatio, mustTranslate: true, semanticRole: "heading" };
     }
 
     // 4. Tiêu đề chuyên mục ngữ pháp / Key expressions / Did you know / Mục tiêu / Fun facts
-    if (/^(?:form of|use of|structure of|usage of|key expressions|using .+ (?:tense|for|to|in|annoyance)|(?:present|past|future)\s+(?:continuous|simple|perfect)(?:\s+tense)?\s*:)/i.test(text)) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, mustTranslate: true, semanticRole: "heading", forceNewline: true };
+    if (
+      /^(?:form of|use of|structure of|usage of|key expressions|using .+ (?:tense|for|to|in|annoyance)|(?:present|past|future)\s+(?:continuous|simple|perfect)(?:\s+tense)?\s*:)/i.test(cleanSource) ||
+      (!context.matchingExercise && wc <= 10 && /^questions?\s+with\s+(?:["“'‘][^"”'’]+["”'’]|[A-Za-z][^?!.]{1,45}…?)$/i.test(cleanSource))
+    ) {
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, mustTranslate: true, semanticRole: "heading", forceNewline: true };
     }
-    if (/^did you know\s*\??$/i.test(text)) {
+    if (/^did you know\s*\??$/i.test(cleanSource)) {
       return { mode: "INLINE_APPEND", paren: true, sourceText: "Did you know?", mustTranslate: true, semanticRole: "heading" };
     }
-    if (sectionTopicLineRe.test(text)) {
-      return { mode: "NEWLINE_AFTER", sourceText: stripEmbeddedVietnameseGloss(text), mustTranslate: true, semanticRole: "heading" };
+    if (sectionTopicLineRe.test(cleanSource)) {
+      return { mode: "NEWLINE_AFTER", sourceText: stripEmbeddedVietnameseGloss(cleanSource), mustTranslate: true, semanticRole: "heading" };
     }
-    if (numberedConceptRe.test(text)) {
-      const cleaned = stripEmbeddedVietnameseGloss(text).replace(/^[•\-–—]\s*/, "").trim();
+    if (numberedConceptRe.test(cleanSource)) {
+      const cleaned = stripEmbeddedVietnameseGloss(cleanSource).replace(/^[•\-–—]\s*/, "").trim();
       return { mode: "NEWLINE_AFTER", sourceText: cleaned, mustTranslate: true, semanticRole: "instruction" };
     }
-    if (context.stress && /^rule\s*:/i.test(text)) {
-      return { mode: "INLINE_APPEND", sourceText: text, mustTranslate: true, semanticRole: "instruction" };
+    if (!context.matchingExercise && !isMonolingualDialogueOrDrill(cleanSource) && conceptColonExplainRe.test(cleanSource)) {
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, hasPattern: hasProtectedPattern(cleanSource), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
+    }
+    if (context.stress && /^rule\s*:/i.test(cleanSource)) {
+      return { mode: "INLINE_APPEND", sourceText: cleanSource, mustTranslate: true, semanticRole: "instruction" };
     }
 
-    // 4b. Nhóm 2: Nội dung giải thích lý thuyết / ngữ pháp ("We use...", "It gives...", "This tense...")
+    // 4b. Nhóm 2: Nội dung giải thích lý thuyết / ngữ pháp ("We use...", "It gives...", "To ask about...")
     if (
-      grammarExplanationRe.test(text) &&
+      grammarExplanationRe.test(cleanSource) &&
       !context.matchingExercise &&
-      !isMonolingualDialogueOrDrill(text) &&
-      text.length <= 360
+      !isMonolingualDialogueOrDrill(cleanSource) &&
+      cleanSource.length <= 360
     ) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, hasPattern: hasProtectedPattern(cleanSource), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
     }
 
-    // 4c. Nhóm 5: Câu review / đính chính / lưu ý không có dấu hai chấm ("In today's lesson...", "Remember to...")
+    // 4c. Nhóm 5: Câu review / đính chính / lưu ý không có dấu hai chấm ("In today's lesson...", "Remember to...", "and we can...")
     if (
-      reviewSentenceRe.test(text) &&
+      (reviewSentenceRe.test(matchText) || (context.review && /^(?:and\s+)?(?:now\s+)?(?:we|you|i)\s+(?:can|have\s+learn(?:ed|t)|['’]ve\s+learn(?:ed|t)|will\s+be\s+able\s+to)\b/i.test(cleanSource))) &&
       !context.matchingExercise &&
-      !isMonolingualDialogueOrDrill(text)
+      !isMonolingualDialogueOrDrill(cleanSource)
     ) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "review", forceNewline: true };
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, hasPattern: hasProtectedPattern(cleanSource), mustTranslate: true, semanticRole: "review", forceNewline: true };
     }
 
-    if ((context.objectives || context.isObjectivesList || ((context.review || context.isReviewList) && !context.matchingExercise)) && !isMonolingualDialogueOrDrill(text) && (
-      /^(?:recall|remember|apply|master|develop|build|introduce|describe|identify|explain|recognize|understand|distinguish|communicate|demonstrate|talk about|ask and answer|use|practice|practise|learn|review|create|make|form|write|read|listen|speak|role[- ]?play|exchange|conduct|handle|respond|give|take|express|produce)\b/i.test(text) ||
+    if ((context.objectives || context.isObjectivesList || ((context.review || context.isReviewList) && !context.matchingExercise)) && !isMonolingualDialogueOrDrill(cleanSource) && (
+      /^(?:recall|remember|apply|master|develop|build|introduce|describe|identify|explain|recognize|understand|distinguish|communicate|demonstrate|talk about|ask and answer|use|practice|practise|learn|review|create|make|form|write|read|listen|speak|role[- ]?play|exchange|conduct|handle|respond|give|take|express|produce)\b/i.test(matchText) ||
       ((context.isObjectivesList || context.isReviewList) && wc >= 3)
     )) {
-      return text.length <= 95
-        ? { mode: "INLINE_APPEND", paren: true, sourceText: text, mustTranslate: true, semanticRole: context.review ? "review" : "instruction" }
-        : { mode: "NEWLINE_AFTER", sourceText: text, mustTranslate: true, semanticRole: context.review ? "review" : "instruction" };
+      return cleanSource.length <= 95
+        ? { mode: "INLINE_APPEND", paren: true, sourceText: cleanSource, mustTranslate: true, semanticRole: context.review ? "review" : "instruction" }
+        : { mode: "NEWLINE_AFTER", sourceText: cleanSource, mustTranslate: true, semanticRole: context.review ? "review" : "instruction" };
     }
     if (context.background && (
-      /^(?:did you know|in latin|so,|this shows|the phrase|however,|in japan,)\b/i.test(text) ||
-      (wc >= 5 && /[.!?:](?:\s*[\u{1F300}-\u{1FAFF}\u2600-\u27BF]+)*\s*$/u.test(text))
+      /^(?:did you know|in latin|so,|this shows|the phrase|however,|in japan,)\b/i.test(cleanSource) ||
+      (wc >= 5 && /[.!?:](?:\s*[\u{1F300}-\u{1FAFF}\u2600-\u27BF]+)*\s*$/u.test(cleanSource))
     )) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, mustTranslate: true, semanticRole: "instruction", forceNewline: true };
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, mustTranslate: true, semanticRole: "instruction", forceNewline: true };
     }
-    if (context.explainVocab && /^(?:someone|somebody|a person|people|one or a group|a place|a process|the act|a type|a company|a business|an organization|something|the ability|to\s+[a-z]{3,})\b/i.test(text)) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, mustTranslate: true, semanticRole: "instruction" };
+    if (context.explainVocab && /^(?:someone|somebody|a person|people|one or a group|a place|a process|the act|a type|a company|a business|an organization|something|the ability|to\s+[a-z]{3,})\b/i.test(cleanSource)) {
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, mustTranslate: true, semanticRole: "instruction" };
     }
-    if (explicit.test(text) && text.length <= 320) {
-      if (/^(?:scenario|your plans are to)\s*:/i.test(text) && text.length <= 75) {
-        return { mode: "INLINE_APPEND", sourceText: text, mustTranslate: true, semanticRole: "prompt" };
+
+    // 4d. Câu hỏi gợi ý tương tác ("Can you add more words to each group?")
+    if (!context.matchingExercise && !isMonolingualDialogueOrDrill(cleanSource) && interactiveQuestionPromptRe.test(matchText)) {
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, mustTranslate: true, semanticRole: "prompt", forceNewline: true };
+    }
+
+    if (explicit.test(matchText) && cleanSource.length <= 320) {
+      if (/^(?:scenario|your plans are to)\s*:/i.test(cleanSource) && cleanSource.length <= 75) {
+        return { mode: "INLINE_APPEND", sourceText: cleanSource, mustTranslate: true, semanticRole: "prompt" };
       }
-      if (isCentered || (pIndex >= 1 && hasPrimaryInstruction) || wc >= 6 || /^instructions?\s*:/i.test(text)) {
-        return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
+      if (isCentered || (pIndex >= 1 && hasPrimaryInstruction) || wc >= 6 || /^instructions?\s*:/i.test(cleanSource)) {
+        return { mode: "NEWLINE_AFTER", sourceText: cleanSource, hasPattern: hasProtectedPattern(cleanSource), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
       }
-      return { mode: "INLINE_APPEND", sourceText: text, mustTranslate: true, semanticRole: "prompt" };
+      return { mode: "INLINE_APPEND", sourceText: cleanSource, mustTranslate: true, semanticRole: "prompt" };
     }
 
     // 5. Câu lệnh hướng dẫn bài tập (Directions) hoặc câu phụ nằm trong cùng khung hướng dẫn
-    if (directions.test(text)) {
+    if (directions.test(matchText)) {
       let validDirection = false;
-      if (risky.test(text)) {
-        validDirection = /\b(?:the|each|below|correct|your|learnt|learned|examples?|dialogues?|partners?|class|pairs?|groups?|company|type|pattern|table|pictures?|words?|sentences?|roles?|survey|questions?|answers?)\b/i.test(text) || /^ask and answer\b/i.test(text);
+      if (risky.test(matchText)) {
+        validDirection = /\b(?:the|each|below|correct|your|learnt|learned|examples?|dialogues?|partners?|class|pairs?|groups?|company|type|pattern|table|pictures?|words?|sentences?|roles?|survey|questions?|answers?)\b/i.test(matchText) || /^ask and answer\b/i.test(matchText);
       } else {
-        validDirection = purpose.test(text) || /^(?:read|listen|watch|repeat|choose|match)\.?$/i.test(text);
+        validDirection = purpose.test(matchText) || /^(?:read|listen|watch|repeat|choose|match)\.?$/i.test(matchText);
       }
       if (validDirection) {
-        if (isCentered || (pIndex >= 1 && hasPrimaryInstruction) || wc >= 5 || text.length >= 45) {
-          return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
+        if (isCentered || (pIndex >= 1 && hasPrimaryInstruction) || wc >= 5 || cleanSource.length >= 45) {
+          return { mode: "NEWLINE_AFTER", sourceText: cleanSource, hasPattern: hasProtectedPattern(cleanSource), mustTranslate: true, semanticRole: "instruction", forceNewline: true };
         }
-        return { mode: "INLINE_APPEND", sourceText: text, mustTranslate: true, semanticRole: "instruction" };
+        return { mode: "INLINE_APPEND", sourceText: cleanSource, mustTranslate: true, semanticRole: "instruction" };
       }
     }
 
@@ -2892,12 +3212,12 @@ globalThis.SlideLingo = (() => {
       pIndex >= 1 &&
       hasPrimaryInstruction &&
       !context.matchingExercise &&
-      !isMonolingualDialogueOrDrill(text) &&
-      (!context.grammar || isTheoryOrReviewLine(text)) &&
-      !/^(?:\d+[.)]\s|[A-D][.)]\s|e\.g\.|for example\b|🔹)/i.test(text) &&
-      (/[.?!,;:]$/.test(text) || wc >= 4)
+      !isMonolingualDialogueOrDrill(cleanSource) &&
+      (!context.grammar || isTheoryOrReviewLine(cleanSource)) &&
+      !/^(?:\d+[.)]\s|[A-D][.)]\s|e\.g\.|for example\b|🔹)/i.test(cleanSource) &&
+      (/[.?!,;:]$/.test(cleanSource) || wc >= 4)
     ) {
-      return { mode: "NEWLINE_AFTER", sourceText: text, hasPattern: hasProtectedPattern(text), mustTranslate: true, semanticRole: context.review ? "review" : "instruction", forceNewline: true };
+      return { mode: "NEWLINE_AFTER", sourceText: cleanSource, hasPattern: hasProtectedPattern(cleanSource), mustTranslate: true, semanticRole: context.review ? "review" : "instruction", forceNewline: true };
     }
 
     return null;
@@ -3033,22 +3353,49 @@ globalThis.SlideLingo = (() => {
 
   function candidates(doc, tree, slide, W, H) {
     const entries = [];
-    for (const sp of descendants(tree, P, "sp")) {
+    const spNodes = descendants(tree, P, "sp");
+    for (const sp of spNodes) {
       normalizeLineBreaksInBody(doc, child(sp, P, "txBody"));
     }
-    const all = descendants(tree, P, "sp").flatMap(extract);
+    const all = spNodes.flatMap(extract);
     if (isSkippedClosingOrWrapUpSlide(all)) return [];
-    const hasUnitHeader = all.some(t => /^unit\s*\d+\s*:/i.test(t)) && all.some(t => /^lesson\s*\d+\b/i.test(t));
-    const cover = slide === 1 || hasUnitHeader || descendants(tree, P, "ph").some(p => p.getAttribute("type") === "ctrTitle");
+    const hasUnitHeader = all.some(t => /^unit\s*\d+\b/i.test(t)) && all.some(t => /^lesson\s*\d+\b/i.test(t));
     const picRects = descendants(tree, P, "pic")
       .map(pic => shapeRect(pic, tree))
       .filter(r => r && !(r.w >= W * 0.85 && r.h >= H * 0.85));
+    const numSp = spNodes.filter(sp => {
+      const ps = extract(sp);
+      if (ps.length !== 1 || !/^0?[1-9]$/.test(ps[0])) return false;
+      const r = shapeRect(sp, tree);
+      return !r || (r.y >= H * 0.08 && r.y < H * 0.7);
+    });
+    const contentSp = spNodes.filter(sp => {
+      if (numSp.includes(sp)) return true;
+      const ps = extract(sp);
+      if (!ps.length || teacher.test(ps[0])) return false;
+      const r = shapeRect(sp, tree);
+      return !isSlideChromeOrBreadcrumb(sp, r, ps, W, H);
+    });
+    const secHeadSp = contentSp.filter(sp => !numSp.includes(sp) && extract(sp).some(t =>
+      isGlossaryHeading(t) ||
+      /^(?:vocabulary|grammar|pronunciation|conversation(?:\s+activator)?|speaking|listening|reading|writing|warm[- ]?up|wrap[- ]?up|extra\s+practice|business\s+communication|review)\b/i.test(t)
+    ));
+    const sectionDivider = slide > 1 && !hasUnitHeader && numSp.length === 1 && secHeadSp.length >= 1 && contentSp.length <= 4;
+    const cover = slide === 1 || hasUnitHeader || (!sectionDivider && descendants(tree, P, "ph").some(p => p.getAttribute("type") === "ctrTitle"));
+    const subtitleSp = sectionDivider ? contentSp.filter(sp => sp !== numSp[0] && sp !== secHeadSp[0] && extract(sp).some(eligible)) : [];
+    const hasSectionSubtitle = sectionDivider && subtitleSp.length >= 1;
+    const blankHostRects = spNodes
+      .filter(sp => extract(sp).some(t => /_{3,}/.test(t)))
+      .map(sp => ({ node: sp, rect: shapeRect(sp, tree) }))
+      .filter(b => b.rect);
 
     const baseContext = {
       cover,
+      sectionDivider,
+      hasSectionSubtitle,
       objectives: all.some(t => /^(?:learning\s+)?objectives?\s*:?$/i.test(t) || /^in today[’']s lesson\b/i.test(t)),
       background: all.some(t => /^(?:origin of the word|did you know\s*\??|fun\s+facts?\b)/i.test(t)),
-      grammar: all.some(t => /^(?:using .+ (?:tense|for|to)|form of|use of|grammar\b|intonation\s*&\s*stress|present\s+continuous\s+tense\s*:)/i.test(t)),
+      grammar: all.some(t => /^(?:using .+ (?:tense|for|to)|form of|use of|grammar\b|intonation\s*&\s*stress|present\s+continuous\s+tense\s*:)/i.test(t) || /^(?:structure|formula)\s*:$/i.test(t) || /^questions?\s+with\b/i.test(t)),
       matchingExercise: all.some(t => /\bread\s+and\s+match\b|\bmatch\s+(?:the\s+)?(?:uses?|sentences?|items?|columns?|words?)\b/i.test(t)),
       review: all.some(t => /^(?:wrap[- ]?up(?:\s*&\s*assignment)?|review|summary|homework(?:\s*&\s*assignment)?|assignment|key\s+takeaways?|in\s+today['’]s\s+lesson\b|what\s+did\s+we\s+learn|self[- ]?(?:check|assessment|reflection))\b/i.test(t)),
       isPhoneForm: all.some(t => /\bmessage\s+for\s*:|call\s+back\s*\?|urgent\s*\?/i.test(t)),
@@ -3082,13 +3429,23 @@ globalThis.SlideLingo = (() => {
         // Ghi chú dành riêng cho giáo viên ("Teacher, please...", "NOTE: ...") giữ nguyên tiếng Anh
         if (teacher.test(nonEmpty[0])) continue;
         if (isVocabDrillLabel(node, rect, nonEmpty, baseContext, picRects)) continue;
+        // Đáp án ngắn chồng trực tiếp lên dòng chỗ trống _______ (ví dụ Slide 21/22 Homework Check) giữ nguyên tiếng Anh
+        if (nonEmpty.length === 1 && !/_{3,}/.test(nonEmpty[0]) && rect && blankHostRects.length) {
+          const wc0 = nonEmpty[0].split(/\s+/).filter(Boolean).length;
+          if (wc0 <= 10 && !isGlossaryHeading(nonEmpty[0]) && blankHostRects.some(b => {
+            if (b.node === node) return false;
+            const hOv = Math.min(rect.x + rect.w, b.rect.x + b.rect.w) - Math.max(rect.x, b.rect.x);
+            const vOv = Math.min(rect.y + rect.h, b.rect.y + b.rect.h) - Math.max(rect.y, b.rect.y);
+            return hOv >= Math.min(rect.w, b.rect.w) * 0.4 && vOv >= Math.min(rect.h, b.rect.h) * 0.35;
+          })) continue;
+        }
         // Hội thoại mẫu / script (Tên: lời thoại) giữ nguyên tiếng Anh để học viên luyện nói
         const speakerLines = nonEmpty.filter(t => /^[A-Z][A-Za-z.'’]*(?:\s[A-Z][A-Za-z.'’]*){0,2}\s?:\s*\S/.test(t) && !/^(?:examples?|note|task|rule|formula|form|structure|name|surname|hometown|nationality|based in|company|job|travel for work|objectives?|vocabulary|grammar|pronunciation)\s*:/i.test(t));
         const speakerNames = new Set(speakerLines.map(t => t.split(":")[0].trim().toLowerCase()));
         if (speakerLines.length >= 3 && speakerNames.size * 1.5 <= speakerLines.length) continue;
 
-        // Khối tiêu đề nhiều dòng trên slide bìa bài học (ví dụ: "Lesson 2" / "Grammar &" / "Business Communication" hoặc "Lesson 2 Grammar &" / "Business Communication")
-        const mCoverLesson = baseContext.cover ? nonEmpty[0].match(/^lesson\s*(\d+)\b\s*:?\s*(.*)$/i) : null;
+        // Khối tiêu đề nhiều dòng trên slide bìa bài học (ví dụ: "Lesson 2" / "Grammar &" / "Business Communication" hoặc "Lesson 3 HOW FAR IS THIS…?")
+        const mCoverLesson = baseContext.cover ? nonEmpty[0].match(/^lesson\s*(\d+)\b\s*[.:–—-]?\s*(.*)$/i) : null;
         if (mCoverLesson && nonEmpty.length >= 1 && nonEmpty.length <= 4 && !nonEmpty.some(hasTargetScript) && (mCoverLesson[2].trim() || nonEmpty.length >= 2)) {
           const lastIdx = pTexts.findLastIndex(Boolean);
           const tail = [mCoverLesson[2].trim(), ...nonEmpty.slice(1)].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
@@ -3099,7 +3456,7 @@ globalThis.SlideLingo = (() => {
             ids,
             node,
             body,
-            actions: [{ mode: "NEWLINE_AFTER", sourceText: combinedSource, ratio: RF.titleRatioL, pNode: pNodes[lastIdx], pIndex: lastIdx, forceNewline: true }],
+            actions: [{ mode: "NEWLINE_AFTER", sourceText: combinedSource, ratio: RF.titleRatioL, pNode: pNodes[lastIdx], pIndex: lastIdx, mustTranslate: true, semanticRole: "heading", forceNewline: true }],
           });
           continue;
         }
@@ -3132,7 +3489,7 @@ globalThis.SlideLingo = (() => {
           ...baseContext,
           inTopHeaderZone,
           isObjectivesList: groupHasObjectives || /^(?:learning\s+)?objectives?\s*:?$/i.test(nonEmpty[0]),
-          isReviewList: (groupHasReview || /^(?:wrap[- ]?up|review|summary|key\s+takeaways?|homework|assignment|remember)\b/i.test(nonEmpty[0])) && !baseContext.matchingExercise,
+          isReviewList: (groupHasReview || /^(?:wrap[- ]?up|review|summary|key\s+takeaways?|homework|assignment|remember|in\s+today['’]s\s+lesson\b)\b/i.test(nonEmpty[0])) && !baseContext.matchingExercise,
           stress: /\b(?:stress|grammar|pronunciation)\b/i.test(full) && nonEmpty.some(t => /^rule\s*:/i.test(t)),
         };
 
@@ -3194,7 +3551,15 @@ globalThis.SlideLingo = (() => {
               }
             }
           }
-          if (act && /^(?:conversation|pair\s*work|group\s*work|role[- ]?play|key\s*expressions?)$/i.test(t) && (filledShape || (rect && rect.h <= 50))) {
+          if (
+            act &&
+            !shapeContext.sectionDivider &&
+            (
+              /^(?:conversation|pair\s*work|group\s*work|role[- ]?play|key\s*expressions?|model|activator|video\s*watching|how\s+to\s+play)$/i.test(t) ||
+              (/^pronunciation$/i.test(t) && rect && rect.h <= 42)
+            ) &&
+            (filledShape || (rect && rect.h <= 50))
+          ) {
             act.mode = "INLINE_APPEND";
             act.paren = true;
             act.lockInline = true;
@@ -3204,7 +3569,8 @@ globalThis.SlideLingo = (() => {
           if (act) {
             if (act.isExample) boxIsExampleBlock = true;
             if (act.mode === "SKIP_HEADER_ONLY") continue;
-            if ((act.mode === "INLINE_APPEND" || act.mode === "NEWLINE_AFTER") && (directions.test(t) || explicit.test(t) || isGlossaryHeading(t) || numberedConceptRe.test(t) || grammarExplanationRe.test(t) || reviewNoteRe.test(t) || reviewSentenceRe.test(t))) {
+            const mTxt = stripForDirectiveMatch(t);
+            if ((act.mode === "INLINE_APPEND" || act.mode === "NEWLINE_AFTER") && (directions.test(mTxt) || explicit.test(mTxt) || isGlossaryHeading(t) || numberedConceptRe.test(t) || grammarExplanationRe.test(mTxt) || reviewNoteRe.test(t) || reviewSentenceRe.test(mTxt))) {
               boxHasPrimaryInstruction = true;
             }
             actions.push({ ...act, pNode: pNodes[i], pIndex: i });
@@ -3436,6 +3802,73 @@ globalThis.SlideLingo = (() => {
     return defaults[k] || defaults[schemeKey] || null;
   }
 
+  function applyColorTransforms(hex, clrNode) {
+    if (!hex || !/^[0-9A-F]{6}$/i.test(hex)) return null;
+    const base = hex.toUpperCase();
+    const mods = Array.from(clrNode?.childNodes || []).filter(n =>
+      n.nodeType === 1 && (n.localName === "lumMod" || n.localName === "lumOff" || n.localName === "satMod" || n.localName === "satOff" || n.localName === "tint" || n.localName === "shade")
+    );
+    if (!mods.length) return base;
+    let r = parseInt(base.slice(0, 2), 16) / 255;
+    let g = parseInt(base.slice(2, 4), 16) / 255;
+    let b = parseInt(base.slice(4, 6), 16) / 255;
+    const hslMods = mods.filter(el => el.localName !== "tint" && el.localName !== "shade");
+    if (hslMods.length) {
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+        else if (max === g) h = (b - r) / d + 2;
+        else h = (r - g) / d + 4;
+        h /= 6;
+      }
+      for (const el of hslMods) {
+        const v = Number(el.getAttribute("val")) / 100000;
+        if (!Number.isFinite(v)) continue;
+        if (el.localName === "lumMod") l *= v;
+        else if (el.localName === "lumOff") l += v;
+        else if (el.localName === "satMod") s *= v;
+        else if (el.localName === "satOff") s += v;
+      }
+      s = Math.min(1, Math.max(0, s));
+      l = Math.min(1, Math.max(0, l));
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        const hue2rgb = t => {
+          const x = t < 0 ? t + 1 : t > 1 ? t - 1 : t;
+          if (x < 1 / 6) return p + (q - p) * 6 * x;
+          if (x < 1 / 2) return q;
+          if (x < 2 / 3) return p + (q - p) * (2 / 3 - x) * 6;
+          return p;
+        };
+        r = hue2rgb(h + 1 / 3);
+        g = hue2rgb(h);
+        b = hue2rgb(h - 1 / 3);
+      }
+    }
+    for (const el of mods) {
+      if (el.localName !== "tint" && el.localName !== "shade") continue;
+      const v = Number(el.getAttribute("val")) / 100000;
+      if (!Number.isFinite(v)) continue;
+      if (el.localName === "tint") {
+        r = r * v + (1 - v);
+        g = g * v + (1 - v);
+        b = b * v + (1 - v);
+      } else {
+        r *= v;
+        g *= v;
+        b *= v;
+      }
+    }
+    const toHex = c => Math.round(Math.min(1, Math.max(0, c)) * 255).toString(16).padStart(2, "0").toUpperCase();
+    return toHex(r) + toHex(g) + toHex(b);
+  }
+
   function resolveFillHex(fillEl, ctx) {
     if (!fillEl) return null;
     if (fillEl.localName === "gradFill") {
@@ -3450,9 +3883,12 @@ globalThis.SlideLingo = (() => {
     if (!clrNode) return null;
     const alpha = child(clrNode, A, "alpha")?.getAttribute("val");
     if (alpha !== undefined && alpha !== null && alpha !== "" && Number(alpha) < 55000) return null;
-    if (clrNode.localName === "srgbClr") return clrNode.getAttribute("val")?.toUpperCase() || null;
-    if (clrNode.localName === "schemeClr") return resolveSchemeFallbackHex(clrNode.getAttribute("val"), ctx);
-    return (clrNode.getAttribute("lastClr") || "000000").toUpperCase();
+    const baseHex = clrNode.localName === "srgbClr"
+      ? (clrNode.getAttribute("val")?.toUpperCase() || null)
+      : clrNode.localName === "schemeClr"
+        ? resolveSchemeFallbackHex(clrNode.getAttribute("val"), ctx)
+        : (clrNode.getAttribute("lastClr") || "000000").toUpperCase();
+    return applyColorTransforms(baseHex, clrNode);
   }
 
   function rectOverlapArea(a, b) {
@@ -3607,8 +4043,7 @@ globalThis.SlideLingo = (() => {
       }
       const styleFontRef = child(child(hostNode, P, "style"), A, "fontRef");
       if (styleFontRef) {
-        const refScheme = child(styleFontRef, A, "schemeClr")?.getAttribute("val");
-        const refHex = child(styleFontRef, A, "srgbClr")?.getAttribute("val")?.toUpperCase() || resolveSchemeFallbackHex(refScheme, ctx);
+        const refHex = resolveFillHex(styleFontRef, ctx);
         if (refHex) return refHex;
       }
     } else if (ctx?.defaultTextStyle) {
@@ -4027,7 +4462,10 @@ globalThis.SlideLingo = (() => {
     const cs = themeDoc ? descendants(themeDoc, A, "clrScheme")[0] : null;
     if (cs) for (const c of Array.from(cs.children)) {
       const v = c.firstElementChild;
-      scheme[c.localName] = (v?.getAttribute("val") || v?.getAttribute("lastClr") || "000000").toUpperCase();
+      const hex = v?.localName === "sysClr"
+        ? (v.getAttribute("lastClr") || (/window$/i.test(v.getAttribute("val") || "") ? "FFFFFF" : "000000"))
+        : (v?.getAttribute("val") || v?.getAttribute("lastClr") || "000000");
+      scheme[c.localName] = hex.toUpperCase();
     }
     const clrMapEl = masterDoc ? descendants(masterDoc, P, "clrMap")[0] : null;
     const clrMap = {};
@@ -5021,6 +5459,7 @@ globalThis.SlideLingo = (() => {
     }
     // Nới rộng vừa phải vào vùng trống (không vượt vật cản, khối nền, vùng nền ảnh tương phản kém)
     function widenBounds(it) {
+      if (!it?.box || !it.orig) return;
       const o = it.orig;
       const innerW = it.box.w - it.insets.l - it.insets.r;
       const lay = layoutFrame(it.frame, innerW, it.wrap);
@@ -5889,7 +6328,7 @@ globalThis.SlideLingo = (() => {
     // Xử lý triệt để mọi va chạm / tràn còn sót bằng đẩy tầng xuống, kéo lên chỗ trống hoặc co giãn cục bộ — KHÔNG bao giờ đẩy bản dịch ra Speaker Notes
     function resolveRemainingCollisions() {
       const compactOneStep = (m, allowInline = true) => {
-        if (!m || m.kind !== "text") return false;
+        if (!m || m.kind !== "text" || !m.modified) return false;
         let did = false;
         if (!m.inGroup && !m.inTable && !m.hostCell) {
           const prevW = m.box?.w || m.origRect.w;
@@ -6063,7 +6502,19 @@ globalThis.SlideLingo = (() => {
                 continue;
               }
             }
-            if (m.kind === "text" && compactOneStep(m, true)) progressed = true;
+            if (m.kind === "text" && compactOneStep(m, true)) {
+              progressed = true;
+            } else if (dir === "bottom") {
+              const mr = extentOf(m).rect;
+              for (const up of mods) {
+                if (up === m || up.inGroup || up.inTable) continue;
+                const ur = extentOf(up).rect;
+                if (hOverlap(mr, ur) > 2 && origExtent(up).rect.y <= origExtent(m).rect.y + 2 && compactOneStep(up, true)) {
+                  progressed = true;
+                  break;
+                }
+              }
+            }
           }
         }
         if (!progressed) break;
@@ -6457,12 +6908,13 @@ globalThis.SlideLingo = (() => {
             const dKey = `${target}::${inCard ? "C" : "W"}::${budgetBucket}::${action.sourceText}`;
             actionDedupKey.set(action, dKey);
             if (!uniqueAiMap.has(dKey)) {
+              const mSrc = stripForDirectiveMatch(action.sourceText);
               uniqueAiMap.set(dKey, {
                 dedupKey: dKey,
                 id: "a" + uniqueAiMap.size,
                 text: action.sourceText,
                 mode: action.mode,
-                isInstruction: directions.test(action.sourceText) || explicit.test(action.sourceText) || isGlossaryHeading(action.sourceText) || grammarExplanationRe.test(action.sourceText) || reviewNoteRe.test(action.sourceText) || reviewSentenceRe.test(action.sourceText),
+                isInstruction: Boolean(action.mustTranslate || directions.test(mSrc) || explicit.test(mSrc) || isGlossaryHeading(action.sourceText) || grammarExplanationRe.test(mSrc) || reviewNoteRe.test(action.sourceText) || reviewSentenceRe.test(mSrc)),
                 boxWidthPt,
                 boxHeightPt,
                 fontSizePt,
@@ -13319,7 +13771,7 @@ $("form").addEventListener("submit",async event=>{
             const usrPrompt = [
               `Target: ${targetLabel} (${tgtCode}). Batch ${slideNumber}/${totalSlides}.`,
               `Rules:`,
-              `1. ALWAYS translate (keepEnglish=false) these 5 groups: (1) Titles/Headings (CONVERSATION, PAIR WORK, Key expressions:, Wrap-up), (2) Lesson instructions & grammar/theory explanations ("We use...", "It gives...", rules), (3) Interactive/practice prompts (Let's talk, Student A/B, role-play), (4) Exercise prompts/scenarios/T-F statements, (5) Review, notes, tips, corrections & reminders (Note:, Tip:, Remember:, In today's lesson...).`,
+              `1. ALWAYS translate (keepEnglish=false) these 5 groups: (1) Titles, section-divider subtitles & subheadings (CONVERSATION, PAIR WORK, MODEL, ACTIVATOR, VIDEO WATCHING, How to play, Key expressions:, Questions with..., Wrap-up), (2) Lesson instructions & grammar/theory explanations ("We use...", "It gives...", "To ask about...", rules), (3) Interactive/practice prompts (Let's talk, "Can you...?", Student A/B, role-play), (4) Exercise prompts/scenarios/T-F statements, (5) Review, notes, tips, corrections & summary lead-ins (Note:, Tip:, Remember:, In today's lesson..., "and we can...").`,
               `2. ONLY keepEnglish=true for: dialogues (A:/B:), fill-in-the-blank drills (1____), MCQ options (a./b./c.), standalone example sentences, key expression phrase lists, isolated vocab words, game titles, and pure Thank-you closing text.`,
               `3. When tight=true, card=true, or freeBelowPt < 28: produce ultra-concise ${targetLabel} strictly <= maxCh chars so zero overlap occurs.`,
               `4. mode: "paren" (short heading/label), "inline" (short line or tight space), or "newline" (titles, sentences, prompts).`,
@@ -13513,6 +13965,206 @@ $("form").addEventListener("submit",async event=>{
   };
 
   restartTimer();
+})();
+
+(() => {
+  const APP_VERSION = "v1.6.0";
+  const APP_CHANGELOG = [
+    {
+      version: "v1.6.0",
+      date: "15/11/2026",
+      tag: "Production · Mới nhất",
+      title: "Tối ưu nhận diện dịch thuật U5L3 & hộp nhật ký phiên bản",
+      items: [
+        "Nhận diện đầy đủ section divider 01–09 cùng phụ đề và cỡ chữ kế thừa <a:defRPr> trên slide bài học.",
+        "Bóc tách tiền tố audio [Track ...] & lời dẫn hội thoại (Listen and repeat., Now, work in pairs...), giữ nguyên tag tiếng Anh.",
+        "Hỗ trợ bảng màu Theme sysClr lastClr và biến đổi lumMod/lumOff để chọn đúng màu chữ dịch trên thẻ nền nhạt.",
+        "Chặn dịch nhầm đáp án ngắn đè lên dòng gạch dưới ____ và khắc phục lỗi widenBounds khi giải layout.",
+        "Bổ sung hộp Nhật ký phiên bản ẩn gọn trên header, chỉ mở xem chi tiết khi bấm vào."
+      ]
+    },
+    {
+      version: "v1.5.0",
+      date: "15/11/2026",
+      tag: "Deploy #14c6be6",
+      title: "Hỗ trợ biểu đồ nhúng OpenXML & custom dropdown ngôn ngữ",
+      items: [
+        "Cho phép tệp .pptx chứa bảng biểu đồ nhúng không macro (chart .xlsx) vượt kiểm tra an toàn DocSecurity.",
+        "Thay hộp chọn ngôn ngữ mặc định của trình duyệt bằng custom dropdown đồng bộ giao diện Ghibli."
+      ]
+    },
+    {
+      version: "v1.4.0",
+      date: "15/11/2026",
+      tag: "Deploy #f3134eb",
+      title: "Nâng giới hạn tải lên 600 MB & chống chồng chéo bố cục",
+      items: [
+        "Mở rộng dung lượng tệp tải lên tối đa 600 MB cho cả 2 chế độ xử lý và bộ nén PPTX.",
+        "Cải thiện bộ phát hiện hướng dẫn nhiều dòng, ghi chú, lưu ý và dãn tầng chống đè chữ sau dịch."
+      ]
+    },
+    {
+      version: "v1.3.0",
+      date: "15/11/2026",
+      tag: "Deploy #6409234",
+      title: "Chuẩn hóa bảng 3 màu tương phản & giao diện di động",
+      items: [
+        "Khóa chặt 3 màu bản dịch (#000000, #FFFFFF, #1D4ED8) theo độ sáng nền thực tế từng khung.",
+        "Hiển thị hàng đợi nhiều tệp gọn gàng và tối ưu bố cục responsive trên điện thoại."
+      ]
+    },
+    {
+      version: "v1.2.0",
+      date: "15/11/2026",
+      tag: "Deploy #063fd10",
+      title: "Dịch AI theo lô toàn bài & tự co giãn khung chữ/bảng",
+      items: [
+        "Gộp lô dịch ngữ cảnh GPT-6 Luna ở cấp toàn bộ bài giảng giúp tăng tốc và giảm trùng lặp.",
+        "Tự động thu gọn cỡ chữ cục bộ, tôn trọng ranh giới ô bảng 3x2 và khung thẻ pill-box."
+      ]
+    },
+    {
+      version: "v1.1.0",
+      date: "15/11/2026",
+      tag: "Deploy #247e680",
+      title: "Giao diện kính mờ Watercolor, nhạc nền & bảo mật DocSecurity",
+      items: [
+        "Áp dụng giao diện Ghibli Watercolor kính mờ với font Manrope & Playfair Display.",
+        "Bổ sung trình phát nhạc nền Piano, bộ sưu tập chibi tương tác và lớp bảo vệ DocSecurity / /api/ai proxy."
+      ]
+    },
+    {
+      version: "v1.0.0",
+      date: "14/11/2026",
+      tag: "Deploy #8275eb7",
+      title: "Khởi chạy 2mybebi trên GitHub & Vercel",
+      items: [
+        "Ra mắt Trợ lý bài giảng với 2 công cụ: SlideLingo (PPTX song ngữ) và Tóm tắt bài học (DOCX & PDF A4)."
+      ]
+    }
+  ];
+
+  globalThis.APP_RELEASE_META = { version: APP_VERSION, changelog: APP_CHANGELOG };
+
+  const trigger = $("changelog-trigger");
+  const pillVer = $("changelog-pill-ver");
+  const unreadDot = $("changelog-unread-dot");
+  const layer = $("changelog-layer");
+  const scrim = $("changelog-scrim");
+  const drawer = $("changelog-drawer");
+  const listEl = $("changelog-list");
+  const closeBtn = $("changelog-close-btn");
+  if (!trigger || !layer || !drawer || !listEl) return;
+
+  if (pillVer) pillVer.textContent = APP_VERSION;
+
+  const SEEN_KEY = "2mybebi_seen_changelog_ver";
+  const isSeen = () => {
+    try { return globalThis.localStorage?.getItem(SEEN_KEY) === APP_VERSION; } catch { return false; }
+  };
+  const markSeen = () => {
+    try { globalThis.localStorage?.setItem(SEEN_KEY, APP_VERSION); } catch {}
+    if (unreadDot) unreadDot.hidden = true;
+  };
+  if (unreadDot) unreadDot.hidden = isSeen();
+
+  listEl.textContent = "";
+  APP_CHANGELOG.forEach((entry, idx) => {
+    const card = document.createElement("article");
+    card.className = idx === 0 ? "changelog-entry is-latest" : "changelog-entry";
+
+    const meta = document.createElement("div");
+    meta.className = "changelog-entry-meta";
+
+    const verBadge = document.createElement("span");
+    verBadge.className = "changelog-ver-badge";
+    verBadge.textContent = entry.version;
+    meta.appendChild(verBadge);
+
+    if (idx === 0) {
+      const latestTag = document.createElement("span");
+      latestTag.className = "changelog-latest-tag";
+      latestTag.textContent = entry.tag;
+      meta.appendChild(latestTag);
+    }
+
+    const dateEl = document.createElement("span");
+    dateEl.className = "changelog-date";
+    dateEl.textContent = idx === 0 ? entry.date : `${entry.tag} · ${entry.date}`;
+    meta.appendChild(dateEl);
+
+    const titleEl = document.createElement("h4");
+    titleEl.className = "changelog-entry-title";
+    titleEl.textContent = entry.title;
+
+    const ul = document.createElement("ul");
+    ul.className = "changelog-entry-items";
+    for (const line of entry.items) {
+      const li = document.createElement("li");
+      li.textContent = line;
+      ul.appendChild(li);
+    }
+
+    card.append(meta, titleEl, ul);
+    listEl.appendChild(card);
+  });
+
+  let isOpen = false;
+  let closeTimer = 0;
+
+  function positionChangelogCard() {
+    if (window.innerWidth <= 640) {
+      drawer.style.left = "";
+      drawer.style.top = "";
+      return;
+    }
+    const rect = trigger.getBoundingClientRect();
+    const cardW = Math.min(450, window.innerWidth - 28);
+    const left = Math.max(14, Math.min(rect.left, window.innerWidth - cardW - 14));
+    const top = Math.max(14, Math.min(rect.bottom + 8, window.innerHeight - 120));
+    drawer.style.left = `${Math.round(left)}px`;
+    drawer.style.top = `${Math.round(top)}px`;
+  }
+
+  function openChangelog() {
+    clearTimeout(closeTimer);
+    positionChangelogCard();
+    layer.hidden = false;
+    void layer.offsetWidth;
+    isOpen = true;
+    layer.classList.add("is-open");
+    trigger.setAttribute("aria-expanded", "true");
+    markSeen();
+  }
+
+  function closeChangelog(restoreFocus = false) {
+    if (!isOpen) return;
+    isOpen = false;
+    layer.classList.remove("is-open");
+    trigger.setAttribute("aria-expanded", "false");
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(() => {
+      if (!isOpen) layer.hidden = true;
+    }, 180);
+    if (restoreFocus) trigger.focus();
+  }
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (isOpen) closeChangelog(false);
+    else openChangelog();
+  });
+  closeBtn?.addEventListener("click", () => closeChangelog(true));
+  scrim?.addEventListener("click", () => closeChangelog(false));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen) {
+      e.preventDefault();
+      closeChangelog(true);
+    }
+  });
+  window.addEventListener("resize", () => {
+    if (isOpen) positionChangelogCard();
+  });
 })();
 
 </script>

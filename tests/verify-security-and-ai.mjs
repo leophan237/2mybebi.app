@@ -1721,4 +1721,382 @@ await test("Giới hạn dung lượng tệp tải lên tối đa 600 MB cho c�
   assert.ok(!/\b60\s*MB\b/.test(html), "Không được còn sót chuỗi giới hạn cũ 60 MB trong 2mybebi.html");
 });
 
+await test("Hồi quy U5L3: section divider 01–09 & defRPr, sysClr lastClr, lumMod/lumOff card, Track prefix, guard đáp án ____ & chống crash widenBounds", async () => {
+  const P = "http://schemas.openxmlformats.org/presentationml/2006/main";
+  const A = "http://schemas.openxmlformats.org/drawingml/2006/main";
+
+  const themeXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Office Theme">
+    <a:themeElements>
+      <a:clrScheme name="Office">
+        <a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1>
+        <a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1>
+        <a:dk2><a:srgbClr val="0E2841"/></a:dk2>
+        <a:lt2><a:srgbClr val="E8EEF5"/></a:lt2>
+        <a:accent1><a:srgbClr val="1E40AF"/></a:accent1>
+        <a:accent2><a:srgbClr val="EA580C"/></a:accent2>
+        <a:accent3><a:srgbClr val="64748B"/></a:accent3>
+        <a:accent4><a:srgbClr val="0F766E"/></a:accent4>
+        <a:accent5><a:srgbClr val="0369A1"/></a:accent5>
+        <a:accent6><a:srgbClr val="4338CA"/></a:accent6>
+        <a:hlink><a:srgbClr val="1D4ED8"/></a:hlink>
+        <a:folHlink><a:srgbClr val="6D28D9"/></a:folHlink>
+      </a:clrScheme>
+    </a:themeElements>
+  </a:theme>`;
+
+  const masterXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld>
+    <p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>
+    <p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst>
+  </p:sldMaster>`;
+
+  const layoutXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank">
+    <p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld>
+  </p:sldLayout>`;
+
+  const slide1Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="CoverBg"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(960)}" cy="${emu(540)}"/></a:xfrm><a:solidFill><a:srgbClr val="0F172A"/></a:solidFill></p:spPr>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="UnitHeading"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(70)}"/><a:ext cx="${emu(820)}" cy="${emu(48)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2400" b="1"><a:solidFill><a:schemeClr val="bg1"/></a:solidFill></a:rPr><a:t>UNIT 5. PLACES AND HOW TO GET THERE</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="LessonHeading"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(130)}"/><a:ext cx="${emu(820)}" cy="${emu(56)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="3200" b="1"><a:solidFill><a:schemeClr val="bg1"/></a:solidFill></a:rPr><a:t>LESSON 3 HOW FAR IS THIS…?</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="HowToPlay"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(220)}"/><a:ext cx="${emu(400)}" cy="${emu(40)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800" b="1"><a:solidFill><a:schemeClr val="bg1"/></a:solidFill></a:rPr><a:t>How to play</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="6" name="WrapUpLead"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(300)}"/><a:ext cx="${emu(400)}" cy="${emu(40)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1800"><a:solidFill><a:schemeClr val="bg1"/></a:solidFill></a:rPr><a:t>and we can …</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const slide2Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="DarkBanner"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="0" y="${emu(85)}"/><a:ext cx="${emu(960)}" cy="${emu(280)}"/></a:xfrm><a:solidFill><a:schemeClr val="dk1"/></a:solidFill></p:spPr>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="DivNum"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(98)}"/><a:ext cx="${emu(120)}" cy="${emu(68)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="4800" b="1"><a:solidFill><a:srgbClr val="EA580C"/></a:solidFill></a:rPr><a:t>04</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="DivHead"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(174)}"/><a:ext cx="${emu(700)}" cy="${emu(48)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:lstStyle><a:lvl1pPr><a:defRPr sz="2800" b="1"><a:solidFill><a:schemeClr val="bg1"/></a:solidFill></a:defRPr></a:lvl1pPr></a:lstStyle><a:p><a:r><a:t>Conversation</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="DivSub"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(236)}"/><a:ext cx="${emu(800)}" cy="${emu(56)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:lstStyle><a:lvl1pPr><a:defRPr sz="2800"><a:solidFill><a:schemeClr val="bg1"/></a:solidFill></a:defRPr></a:lvl1pPr></a:lstStyle><a:p><a:r><a:t>Talk about distance and means of transportation</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const slide3Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="DarkBanner2"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="0" y="${emu(85)}"/><a:ext cx="${emu(960)}" cy="${emu(280)}"/></a:xfrm><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill></p:spPr>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="DivNum2"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(98)}"/><a:ext cx="${emu(120)}" cy="${emu(68)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="4800" b="1"><a:solidFill><a:srgbClr val="EA580C"/></a:solidFill></a:rPr><a:t>02</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="DivHead2"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(174)}"/><a:ext cx="${emu(700)}" cy="${emu(48)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2800" b="1"><a:solidFill><a:schemeClr val="bg1"/></a:solidFill></a:rPr><a:t>GRAMMAR</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="DivSub2"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(60)}" y="${emu(236)}"/><a:ext cx="${emu(800)}" cy="${emu(56)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2800"><a:solidFill><a:schemeClr val="bg1"/></a:solidFill></a:rPr><a:t>Questions with “How far…?”</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const slide4Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="TrackListen"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(20)}"/><a:ext cx="${emu(880)}" cy="${emu(30)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400" b="1"/><a:t>[U5L3_Track 2] Listen and repeat.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="PairsInst"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(54)}"/><a:ext cx="${emu(880)}" cy="${emu(30)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400"/><a:t>Now, work in pairs and practice the conversation.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="QuestionPrompt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(88)}"/><a:ext cx="${emu(880)}" cy="${emu(30)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400"/><a:t>Can you add more words to each group?</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="GrammarTheory"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(124)}"/><a:ext cx="${emu(880)}" cy="${emu(112)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1600" b="1"/><a:t>Questions with How far…</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>To ask about distance or travel time between places.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400"/><a:t>How far: ask about distance between two places.</a:t></a:r></a:p>
+          <a:p><a:r><a:rPr sz="1400" b="1"/><a:t>Structure:</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="6" name="SubModel"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(248)}"/><a:ext cx="${emu(220)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400" b="1"/><a:t>MODEL</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="7" name="SubActivator"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(280)}" y="${emu(248)}"/><a:ext cx="${emu(220)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400" b="1"/><a:t>ACTIVATOR</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="8" name="SubVideo"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(520)}" y="${emu(248)}"/><a:ext cx="${emu(260)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400" b="1"/><a:t>VIDEO WATCHING</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="9" name="PaleCard36"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="${emu(40)}" y="${emu(286)}"/><a:ext cx="${emu(880)}" cy="${emu(58)}"/></a:xfrm>
+          <a:solidFill><a:schemeClr val="tx2"><a:lumMod val="10000"/><a:lumOff val="90000"/></a:schemeClr></a:solidFill>
+        </p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400"/><a:t>Asking about means of transportation: How do you go to ….?</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="10" name="PushingPrompt"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(380)}"/><a:ext cx="${emu(520)}" cy="${emu(86)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/>
+          <a:p><a:r><a:rPr sz="1600"/><a:t>Work in pairs and discuss how your team commutes every day across the city.</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="11" name="BottomUnmodified"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(482)}"/><a:ext cx="${emu(520)}" cy="${emu(34)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400"/><a:t>I take the bus to work.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const slide5Xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+    <p:cSld><p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="2" name="HwBanner"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="0" y="${emu(15)}"/><a:ext cx="${emu(720)}" cy="${emu(50)}"/></a:xfrm><a:solidFill><a:srgbClr val="1E293B"/></a:solidFill></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="2000" b="1"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr><a:t>HOMEWORK &amp; LESSON PREPARATION CHECK</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="3" name="HwInst"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(40)}" y="${emu(85)}"/><a:ext cx="${emu(700)}" cy="${emu(36)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1600" b="1"/><a:t>Look at the pictures. Write imperatives.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="4" name="BlankHost"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(80)}" y="${emu(320)}"/><a:ext cx="${emu(260)}" cy="${emu(30)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400"/><a:t>1. ______________</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="5" name="AnswerReveal"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr><a:xfrm><a:off x="${emu(105)}" y="${emu(312)}"/><a:ext cx="${emu(200)}" cy="${emu(26)}"/></a:xfrm><a:noFill/></p:spPr>
+        <p:txBody><a:bodyPr/><a:p><a:r><a:rPr sz="1400"/><a:t>Take the train.</a:t></a:r></a:p></p:txBody>
+      </p:sp>
+    </p:spTree></p:cSld>
+  </p:sld>`;
+
+  const slides = [slide1Xml, slide2Xml, slide3Xml, slide4Xml, slide5Xml];
+  const z = new slEnv.JSZip();
+  z.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-officedocument.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/></Types>`);
+  z.file("ppt/presentation.xml", `<?xml version="1.0" encoding="UTF-8"?><p:presentation xmlns:p="${P}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId10"/></p:sldMasterIdLst><p:sldIdLst>${slides.map((_, i) => `<p:sldId id="${256 + i}" r:id="rId${i + 1}"/>`).join("")}</p:sldIdLst><p:sldSz cx="12192000" cy="6858000"/></p:presentation>`);
+  z.file("ppt/_rels/presentation.xml.rels", `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId10" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>${slides.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i + 1}.xml"/>`).join("")}</Relationships>`);
+  z.file("ppt/theme/theme1.xml", themeXml);
+  z.file("ppt/slideMasters/slideMaster1.xml", masterXml);
+  z.file("ppt/slideMasters/_rels/slideMaster1.xml.rels", `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`);
+  z.file("ppt/slideLayouts/slideLayout1.xml", layoutXml);
+  z.file("ppt/slideLayouts/_rels/slideLayout1.xml.rels", `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>`);
+  slides.forEach((xml, i) => {
+    z.file(`ppt/slides/slide${i + 1}.xml`, xml);
+    z.file(`ppt/slides/_rels/slide${i + 1}.xml.rels`, `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`);
+  });
+
+  const u8 = await z.generateAsync({ type: "uint8array" });
+  const ab = u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+
+  const origWarn = console.warn;
+  const origErr = console.error;
+  const layoutSolveErrors = [];
+  console.warn = (...args) => { const s = args.map(String).join(" "); if (s.includes("[SL] layout solve")) layoutSolveErrors.push(s); origWarn(...args); };
+  console.error = (...args) => { const s = args.map(String).join(" "); if (s.includes("[SL] layout solve")) layoutSolveErrors.push(s); origErr(...args); };
+  const out = await SlideLingo.convert(ab, "ja", async text => `JA:${text}`);
+  console.warn = origWarn;
+  console.error = origErr;
+
+  assert.equal(layoutSolveErrors.length, 0, `Không được phát sinh lỗi layout solve: ${layoutSolveErrors.join("; ")}`);
+  assert.equal(out.report.notes, 0, "Không được rơi bản dịch xuống Speaker Notes");
+  assert.ok((SlideLingo.lastLayoutLog || []).every(l => (l.collisions || []).length === 0), "Mọi slide phải có collisions === 0");
+
+  const outZip = await slEnv.JSZip.loadAsync(out.bytes);
+  const readRuns = async slideIdx => {
+    const xml = await outZip.file(`ppt/slides/slide${slideIdx}.xml`).async("string");
+    const doc = new slEnv.DOMParser().parseFromString(xml, "application/xml");
+    const I = SlideLingo._internals;
+    return I.descendants(doc, A, "r").map(r => {
+      const text = I.descendants(r, A, "t").map(t => t.textContent).join("");
+      const sf = I.child(I.child(r, A, "rPr"), A, "solidFill");
+      const hex = I.child(sf, A, "srgbClr")?.getAttribute("val")?.toUpperCase() || null;
+      return { text, hex };
+    });
+  };
+
+  // Slide 1 Cover
+  const s1Xml = await outZip.file("ppt/slides/slide1.xml").async("string");
+  assert.ok(s1Xml.includes("JA:Places And How To Get There"), "Slide 1: phải dịch UNIT 5. PLACES AND HOW TO GET THERE");
+  assert.ok(s1Xml.includes("第3課：JA:How Far Is This…?"), "Slide 1: phải dịch LESSON 3 HOW FAR IS THIS…?");
+  assert.ok(s1Xml.includes("(遊び方)"), "Slide 1: phải dịch How to play");
+  assert.ok(s1Xml.includes("そして、次のことができるようになりました…"), "Slide 1: phải dịch and we can …");
+
+  // Slide 2 & Slide 3 Section Dividers (numSp 04 / 02 + defRPr sz=2800 + sysClr bg1 -> #FFFFFF)
+  const s2Runs = await readRuns(2);
+  assert.ok(s2Runs.some(r => r.text.includes("会話") && r.hex === "FFFFFF"), "Slide 2: 04 Conversation phải dịch màu #FFFFFF");
+  assert.ok(s2Runs.some(r => r.text.includes("JA:Talk about distance and means of transportation") && r.hex === "FFFFFF"), "Slide 2: subtitle section divider (defRPr + sysClr) phải dịch màu #FFFFFF");
+
+  const s3Runs = await readRuns(3);
+  assert.ok(s3Runs.some(r => r.text.includes("文法") && r.hex === "FFFFFF"), "Slide 3: 02 GRAMMAR phải dịch màu #FFFFFF");
+  assert.ok(s3Runs.some(r => r.text.includes("JA:Questions with 「How far…?」") && r.hex === "FFFFFF"), "Slide 3: Questions with “How far…?” phải dịch màu #FFFFFF");
+
+  // Slide 4 Track prefix, prompts, grammar explanations, short headings, pale lumMod/lumOff card (#1D4ED8), & bounds compaction
+  const s4Runs = await readRuns(4);
+  const s4Xml = await outZip.file("ppt/slides/slide4.xml").async("string");
+  assert.ok(s4Xml.includes("[U5L3_Track 2] Listen and repeat.") && s4Xml.includes("JA:Listen and repeat.") && !s4Xml.includes("JA:[U5L3_Track 2]"), "Slide 4: giữ [U5L3_Track 2] tiếng Anh và chỉ dịch Listen and repeat.");
+  assert.ok(s4Xml.includes("JA:Now, work in pairs and practice the conversation."), "Slide 4: dịch Now, work in pairs...");
+  assert.ok(s4Xml.includes("JA:Can you add more words to each group?"), "Slide 4: dịch Can you add more words to each group?");
+  assert.ok(s4Xml.includes("JA:Questions with How far…"), "Slide 4: dịch Questions with How far…");
+  assert.ok(s4Xml.includes("JA:To ask about distance or travel time between places."), "Slide 4: dịch To ask about...");
+  assert.ok(s4Xml.includes("JA:How far: ask about distance between two places."), "Slide 4: dịch How far: ask about...");
+  assert.ok(s4Xml.includes("(構文)"), "Slide 4: dịch Structure:");
+  assert.ok(s4Xml.includes("(モデル)") && s4Xml.includes("(アクティビティ)") && s4Xml.includes("(動画視聴)"), "Slide 4: dịch MODEL / ACTIVATOR / VIDEO WATCHING");
+  assert.ok(s4Runs.some(r => r.text.includes("JA:Asking about means of transportation") && r.hex === "1D4ED8"), "Slide 4: thẻ lumMod/lumOff nền nhạt phải chọn màu dịch #1D4ED8 (không phải #FFFFFF)");
+  assert.ok(!s4Xml.includes("JA:I take the bus to work."), "Slide 4: ví dụ gốc phía dưới không bị dịch sai và đẩy vượt đáy");
+
+  // Slide 5 Blank-line answer-key guard
+  const s5Xml = await outZip.file("ppt/slides/slide5.xml").async("string");
+  assert.ok(s5Xml.includes("宿題・レッスン準備の確認") && s5Xml.includes("JA:Look at the pictures. Write imperatives."), "Slide 5: dịch tiêu đề HOMEWORK & Look at the pictures");
+  assert.ok(!s5Xml.includes("JA:Take the train."), "Slide 5: không dịch đáp án nằm đè lên chỗ trống ______");
+});
+
+await test("Hộp thông báo Changelog theo version: mặc định ẩn (hidden), bấm mở/ẩn & đồng bộ với CHANGELOG.md", () => {
+  assert.match(html, /<button\b[^>]*id="changelog-trigger"[^>]*aria-expanded="false"/, "Nút mở Changelog phải có aria-expanded=\"false\" lúc mới tải");
+  assert.match(html, /<div class="changelog-layer" id="changelog-layer" hidden>/, "#changelog-layer phải mang thuộc tính hidden để ẩn mặc định");
+  assert.ok(html.includes('id="changelog-close-btn"'), "Hộp Changelog phải có nút đóng/ẩn #changelog-close-btn");
+
+  const metaIdx = scriptMatches[2].indexOf("const APP_VERSION =");
+  assert.ok(metaIdx > 0, "Phải có khai báo APP_VERSION trong <script> thứ 3");
+  const iifeStart = scriptMatches[2].lastIndexOf("(() => {", metaIdx);
+  assert.ok(iifeStart > 0, "Phải tìm thấy IIFE quản lý Changelog");
+  const changelogSnippet = scriptMatches[2].slice(iifeStart);
+
+  const elements = new Map();
+  const makeStubEl = (id) => ({
+    id,
+    hidden: id === "changelog-layer" || id === "changelog-unread-dot",
+    textContent: "",
+    className: "",
+    style: {},
+    attributes: {},
+    children: [],
+    classList: {
+      set: new Set(),
+      add(c) { this.set.add(c); },
+      remove(c) { this.set.delete(c); },
+      toggle(c, f) { if (f) this.set.add(c); else this.set.delete(c); },
+      contains(c) { return this.set.has(c); },
+    },
+    setAttribute(k, v) { this.attributes[k] = String(v); },
+    getAttribute(k) { return this.attributes[k] ?? null; },
+    addEventListener(evt, fn) { this[`_on_${evt}`] = fn; },
+    getBoundingClientRect() { return { left: 24, bottom: 52, top: 28, width: 120, height: 24 }; },
+    appendChild(child) { this.children.push(child); },
+    append(...nodes) { this.children.push(...nodes); },
+    focus() {},
+    offsetWidth: 420,
+  });
+  for (const id of ["changelog-trigger", "changelog-pill-ver", "changelog-unread-dot", "changelog-layer", "changelog-scrim", "changelog-drawer", "changelog-list", "changelog-close-btn"]) {
+    elements.set(id, makeStubEl(id));
+  }
+  const storage = new Map();
+  const sandbox = {
+    globalThis: null,
+    $: id => elements.get(id) || null,
+    document: {
+      createElement: () => makeStubEl(""),
+      addEventListener() {},
+    },
+    window: { innerWidth: 1280, innerHeight: 800, addEventListener() {} },
+    localStorage: {
+      getItem: k => storage.get(k) ?? null,
+      setItem: (k, v) => storage.set(k, String(v)),
+    },
+    setTimeout: () => 1,
+    clearTimeout: () => {},
+  };
+  sandbox.globalThis = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(changelogSnippet, sandbox);
+
+  const meta = sandbox.APP_RELEASE_META;
+  assert.ok(meta && /^v\d+\.\d+\.\d+$/.test(meta.version), "APP_VERSION phải đúng chuẩn vX.Y.Z");
+  assert.ok(Array.isArray(meta.changelog) && meta.changelog.length >= 1, "APP_CHANGELOG phải chứa ít nhất 1 phiên bản");
+  assert.equal(meta.changelog[0].version, meta.version, "Phiên bản đầu bảng APP_CHANGELOG phải khớp APP_VERSION");
+
+  for (const entry of meta.changelog) {
+    assert.ok(/^v\d+\.\d+\.\d+$/.test(entry.version), `Version không hợp lệ: ${entry.version}`);
+    assert.ok(typeof entry.date === "string" && entry.date.trim().length > 0, `Thiếu date cho ${entry.version}`);
+    assert.ok(typeof entry.tag === "string" && entry.tag.trim().length > 0, `Thiếu tag cho ${entry.version}`);
+    assert.ok(typeof entry.title === "string" && entry.title.trim().length > 0, `Thiếu title cho ${entry.version}`);
+    assert.ok(Array.isArray(entry.items) && entry.items.length > 0 && entry.items.every(s => typeof s === "string" && s.trim().length > 0), `Thiếu items cho ${entry.version}`);
+  }
+
+  assert.ok(elements.get("changelog-layer").hidden === true, "Sau khởi tạo hộp Changelog vẫn phải ẩn");
+  elements.get("changelog-trigger")._on_click({ stopPropagation() {} });
+  assert.equal(elements.get("changelog-layer").hidden, false, "Bấm #changelog-trigger phải hiện hộp Changelog");
+  assert.equal(elements.get("changelog-trigger").getAttribute("aria-expanded"), "true");
+  assert.equal(storage.get("2mybebi_seen_changelog_ver"), meta.version, "Mở xem phải lưu version đã đọc vào localStorage");
+  elements.get("changelog-close-btn")._on_click();
+  assert.equal(elements.get("changelog-trigger").getAttribute("aria-expanded"), "false", "Bấm Ẩn phải thu gọn hộp Changelog");
+
+  assert.ok(html.includes(`id="changelog-pill-ver">${meta.version}<`), "Badge HTML #changelog-pill-ver phải khớp APP_VERSION");
+  const changelogMd = readFileSync(path.join(ROOT, "CHANGELOG.md"), "utf8");
+  assert.ok(changelogMd.includes(`## ${meta.version}`), "CHANGELOG.md phải ghi nhận mục tương ứng APP_VERSION");
+});
+
 console.log(`\nHoàn tất: ${passed}/${passed} bài kiểm thử đã PASS!\n`);

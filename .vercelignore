@@ -1,6 +1,8 @@
 .DS_Store
 .agents
 .git
+AGENTS.md
+CHANGELOG.md
 output_mau
 tests
 README.md
